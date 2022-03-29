@@ -18,7 +18,7 @@ cmake: CMakeLists.txt | build
 	cmake -S . -B build
 	
 build: 
-	mkdir -p build
+	mkdir -p build/output
 
 # clean
 clean:

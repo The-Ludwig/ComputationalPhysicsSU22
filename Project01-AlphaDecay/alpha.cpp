@@ -41,7 +41,7 @@ get_config(int argc, char const *argv[])
  * @param Z2 number of protons
  * @return potential in MeV
  */
-Eigen::ArrayXd get_potential(Eigen::ArrayXd &r, double V0, double Z1, double Z2)
+Eigen::ArrayXd get_potential_middle(Eigen::ArrayXd &r, double V0, double Z1, double Z2)
 {
     Eigen::ArrayXd pot(r.rows() + 1);
 
@@ -53,10 +53,80 @@ Eigen::ArrayXd get_potential(Eigen::ArrayXd &r, double V0, double Z1, double Z2)
     }
     pot[pot.rows() - 1] = 0;
 
-    // for (unsigned int i = 1; i < pot.rows(); i++)
-    // {
-    //     pot[i] = alpha * hbarc * Z1 * Z2 / r[i - 1];
-    // }
+    return pot;
+}
+
+Eigen::ArrayXd get_potential_integral(Eigen::ArrayXd &r, double V0, double Z1, double Z2)
+{
+    Eigen::ArrayXd pot(r.rows() + 1);
+
+    pot[0] = alpha * hbarc * Z1 * Z2 / r[0] + V0;
+
+    for (unsigned int i = 1; i < pot.rows() - 1; i++)
+    {
+        pot[i] = alpha * hbarc * Z1 * Z2 * std::log(r[i] / r[i - 1]) / (r[i] - r[i - 1]);
+    }
+    pot[pot.rows() - 1] = 0;
+
+    return pot;
+}
+
+Eigen::ArrayXd get_middle_points(Eigen::ArrayXd &r)
+{
+    Eigen::ArrayXd m(r.size() - 1);
+    for (int i = 0; i < m.size(); i++)
+        m[i] = (r[i] + r[i + 1]) / 2;
+    return m;
+}
+
+Eigen::ArrayXd get_potential_realistic(Eigen::ArrayXd &r, double V0, double Z1, double Z2, double R0)
+{
+    Eigen::ArrayXd pot(r.rows() + 1);
+    auto mid = get_middle_points(r);
+
+    pot[0] = alpha * hbarc * Z1 * Z2 / r[0] + V0;
+
+    double a = 0.55;
+
+    for (unsigned int i = 1; i < pot.rows() - 1; i++)
+    {
+        pot[i] = -V0 * (1 + std::cosh(R0 / a)) / (std::cosh(mid[i - 1] / a) + std::cosh(R0 / a));
+        if (mid[i - 1] >= R0)
+            pot[i] += alpha * hbarc * Z1 * Z2 / (mid[i - 1]);
+        else
+            pot[i] += alpha * hbarc * Z1 * Z2 / (2 * R0) * (3 - std::pow(mid[i - 1] / R0, 2));
+    }
+    pot[pot.rows() - 1] = 0;
+
+    return pot;
+}
+
+Eigen::ArrayXd get_potential_left(Eigen::ArrayXd &r, double V0, double Z1, double Z2)
+{
+    Eigen::ArrayXd pot(r.rows() + 1);
+
+    pot[0] = alpha * hbarc * Z1 * Z2 / r[0] + V0;
+
+    for (unsigned int i = 1; i < pot.rows(); i++)
+    {
+        pot[i] = alpha * hbarc * Z1 * Z2 / r[i - 1];
+    }
+
+    return pot;
+}
+
+Eigen::ArrayXd get_potential_right(Eigen::ArrayXd &r, double V0, double Z1, double Z2)
+{
+    Eigen::ArrayXd pot(r.rows() + 1);
+
+    pot[0] = alpha * hbarc * Z1 * Z2 / r[0] + V0;
+
+    for (unsigned int i = 1; i < pot.rows() - 1; i++)
+    {
+        pot[i] = alpha * hbarc * Z1 * Z2 / r[i];
+    }
+
+    pot[pot.rows() - 1] = 0;
 
     return pot;
 }
@@ -110,12 +180,12 @@ void run_simulation(YAML::Node &simulation_settings, YAML::Node &data)
     auto R_last = simulation_settings["R_last"].as<double>();
     auto V0 = simulation_settings["V0"].as<double>();
     auto E_bind_alpha = simulation_settings["E_bind_alpha"].as<double>();
-    auto m_neutron = simulation_settings["m_neutron"].as<double>();
-    auto m_proton = simulation_settings["m_proton"].as<double>();
+    auto pot_method = simulation_settings["pot_method"].as<std::string>();
 
     auto name = simulation_settings["Name"].as<std::string>();
 
-    std::cout << "Simulation Setting: " << name << "\n\n";
+    std::cout << "Simulation Setting: " << name << "\n"
+              << std::endl;
 
     for (std::size_t i = 0; i < data.size(); i++)
     {
@@ -123,6 +193,7 @@ void run_simulation(YAML::Node &simulation_settings, YAML::Node &data)
         auto Z_parent = data[i]["Z_parent"].as<double>();
         auto E_bind_p = data[i]["E_bind_p"].as<double>();
         auto E_bind_d = data[i]["E_bind_d"].as<double>();
+        auto half_life_lit = data[i]["half_life"].as<double>();
 
         auto symbol = data[i]["Symbol"].as<std::string>();
 
@@ -135,13 +206,52 @@ void run_simulation(YAML::Node &simulation_settings, YAML::Node &data)
         auto R0_this = R0 * std::pow(A_daughter, 1. / 3.);
 
         // lets first construct the r array as it is constant for every nucleus
-        Eigen::ArrayXd r = Eigen::ArrayXd::LinSpaced(N + 1, R0_this, R_last);
+        Eigen::ArrayXd r;
+        if (pot_method == "realistic")
+            r = Eigen::ArrayXd::LinSpaced(N + 1, 0, R_last);
+        else
+            r = Eigen::ArrayXd::LinSpaced(N + 1, R0_this, R_last);
 
-        Eigen::ArrayXcd pot = get_potential(r, V0, Z_daughter, 2); // MeV
+        Eigen::ArrayXcd pot;
+        if (pot_method == "middle")
+        {
+            pot = get_potential_middle(r, V0, Z_daughter, 2); // MeV
+        }
+        else if (pot_method == "left")
+        {
+            pot = get_potential_left(r, V0, Z_daughter, 2); // MeV
+        }
+        else if (pot_method == "right")
+        {
+            pot = get_potential_right(r, V0, Z_daughter, 2); // MeV
+        }
+        else if (pot_method == "integrate")
+        {
+            pot = get_potential_integral(r, V0, Z_daughter, 2); // MeV
+        }
+        else if (pot_method == "realistic")
+        {
+            pot = get_potential_realistic(r, V0, Z_daughter, 2, R0_this); // MeV
+        }
+        else
+        {
+            std::cerr << "Warning! Unkown potential method: " << pot_method << std::endl;
+            pot = get_potential_middle(r, V0, Z_daughter, 2); // MeV
+        }
+
         Eigen::ArrayXcd k = (2 * m_alpha * (E_alpha - pot)).sqrt() / hbarc;
 
-        NumpySaver(std::string("build/output/" + name + "-" + symbol + "-r.npy")) << r;
-        NumpySaver(std::string("build/output/" + name + "-" + symbol + "-pot.npy")) << pot.real();
+        // Save potential to plot it!
+        Eigen::ArrayXd r_pot(r.size() + 1);
+        if (pot_method == "realistic")
+        {
+            r_pot << 0, get_middle_points(r), r(Eigen::last);
+        }
+        else
+        {
+            r_pot << 0, r;
+        }
+        NumpySaver(std::string("build/output/" + name + "-" + symbol + "-pot.npy")) << r_pot << pot.real();
 
         auto mat = get_matrix(k, r);
         auto b = get_rhs(N);
@@ -166,7 +276,8 @@ void run_simulation(YAML::Node &simulation_settings, YAML::Node &data)
         double v = std::sqrt(2 * E_alpha / m_alpha) * c;              // m/s
         double half_life = std::log(2) * 2 * R0_this / T / v * 1e-15; // s
 
-        std::cerr << "Lifetime of " << symbol << " " << half_life << "s" << std::endl;
+        std::cerr << "Lifetime of " << symbol << " " << half_life << "s (Difference to literature value of "
+                  << (half_life / half_life_lit - 1) * 100 << "%)" << std::endl;
     }
 }
 

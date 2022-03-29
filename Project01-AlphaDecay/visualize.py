@@ -7,14 +7,16 @@ with open("config.yaml") as f:
 
 for simulation in config["simulation_settings"]:
     for element in config["data"]:
-        r = np.genfromtxt(f"build/{simulation['Name']}-{element['Symbol']}-r.npy")
-        pot = np.genfromtxt(f"build/{simulation['Name']}-{element['Symbol']}-pot.npy")
+        r, pot = np.genfromtxt(
+            f"build/output/{simulation['Name']}-{element['Symbol']}-pot.npy",
+            unpack=True,
+        )
 
-        plt.plot([0, *r], pot)
+        plt.plot(r, pot)
 
         plt.xlabel("Radius r / fm")
         plt.ylabel("Potential V / MeV")
         plt.grid()
 
         plt.tight_layout()
-        plt.savefig(f"build/{simulation['Name']}-{element['Symbol']}.pdf")
+        plt.savefig(f"build/{simulation['Name']}-{element['Symbol']}-pot.pdf")
