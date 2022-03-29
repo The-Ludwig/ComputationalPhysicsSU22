@@ -1,0 +1,34 @@
+simulation_settings:
+  - Name: simple
+    N: 1
+    R0: 1.3 #fm
+    R_last: 10 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: -28.270846008360625  # binding energy of alpha particle
+    m_neutron: 939.565    # MeV mass of neutron
+    m_proton: 938.272     # MeV mass of proton
+  - Name: complex
+    N: 1000
+    R0: 1.3 #fm
+    R_last: 100 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: -28.270846008360625  # binding energy of alpha particle
+    m_neutron: 939.565    # MeV mass of neutron
+    m_proton: 938.272     # MeV mass of proton
+
+
+data:
+  - Symbol: Po
+    A_parent: 212 # polonium
+    Z_parent: 84 # polonium
+    E_bind_p: -10.3694 # MeV
+    E_bind_d: -21.7480 # MeV
+    half_life: 299 # ns
+  - Symbol: U
+    A_parent: 238
+    Z_parent: 92
+    E_bind_p: 47.3089 # MeV
+    E_bind_d: 40.6140 # MeV
+    half_life: 4.468e9 # years
