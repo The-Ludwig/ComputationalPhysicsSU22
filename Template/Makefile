@@ -1,27 +1,47 @@
 EXECUTABLE=test
+PLOTS=test.pdf
+OUTPUT=test.npy
 
-all: exercise.zip
 
-build/$(EXECUTABLE): $(EXECUTABLE).cpp | conan cmake build 
-	cmake --build build
+PLOT_PATHS=$(addprefix build/plots/,$(PLOTS))
+OUTPUT_PATHS=$(addprefix build/output/,$(OUTPUT))
 
-report.pdf: | build
-	pandoc report.md -o build/report.pdf
+$(info OUTPUT_PATHS=$(OUTPUT_PATHS))
+$(info PLOT_PATHS=$(PLOT_PATHS))
 
-exercise.zip: report.pdf | build
-	zip -r build/exercise build/report.pdf 
+.PHONY: all build FORCE clean
 
-conan: conanfile.txt | build
-	conan install -of build -if build .
+all: build/exercise.zip
 
-cmake: CMakeLists.txt | build 
+build/exercise.zip: build/report.pdf | build
+	cp build/report.pdf report.pdf
+	zip -r build/exercise . --exclude build/\*
+	rm report.pdf
+
+build/report.pdf: report.md $(PLOT_PATHS) | build
+	pandoc report.md --number-sections --citeproc --bibliography=references.bib -f markdown -o build/report.pdf  
+
+$(PLOT_PATHS)&: visualize.py $(OUTPUT_PATHS) | build
+	python visualize.py
+
+$(OUTPUT_PATHS)&: build/$(EXECUTABLE) config.yaml | build
+	build/$(EXECUTABLE)
+
+build/$(EXECUTABLE): build/Makefile | build 
+	$(MAKE) -C build
+
+build/Makefile: build/conan_paths.cmake CMakeLists.txt | build
 	cmake -S . -B build
+
+build/conan%: conanfile.txt | build
+	conan install -of build -if build .
 	
-build: 
-	mkdir -p build
+build: FORCE
+	mkdir -p build/output build/plots
 
 # clean
-clean:
+clean: FORCE
 	rm -rf build
 
-.PHONY : build clean cmake conan
+FORCE:
+

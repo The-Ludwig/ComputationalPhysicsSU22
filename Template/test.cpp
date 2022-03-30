@@ -1,29 +1,29 @@
-#include <iostream>
-#include <Eigen/Dense>
+
+
 #include <yaml-cpp/yaml.h>
+
+#include <Eigen/Dense>
+#include <iostream>
+
 #include "NumpySaver.hpp"
 
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]) {
+  YAML::Node config = YAML::LoadFile("config.yaml");
 
-    YAML::Node config = YAML::LoadFile("config.yaml");
+  Eigen::ArrayXd array;
+  std::string name;
 
-    Eigen::MatrixXd matrix;
+  if (config["dim"] && config["name"]) {
+    array = Eigen::ArrayXd::LinSpaced(config["dim"].as<int>(), 0, 10);
+    name = config["name"].as<std::string>();
+  } else {
+    throw std::range_error("Config file must include 'dim_x' and 'dim_y'.");
+  }
 
-    if (config["dim_x"] && config["dim_y"])
-    {
-        matrix = Eigen::MatrixXd::Ones(config["dim_x"].as<int>(), config["dim_y"].as<int>());
-    }
-    else
-    {
-        throw std::range_error("Config file must include 'dim_x' and 'dim_y'.");
-    }
+  NumpySaver("build/output/" + name + ".npy")
+      << "This is a test array" << array << (array * array * 2 + 10.);
 
-    std::cout << "Hello World!";
+  std::cout << "build/output/test.npy saved!";
 
-    NumpySaver("build/test.npy") << "Hello again World!" << matrix << matrix;
-
-    std::cout << "build/test.npy saved!";
-
-    return 0;
+  return 0;
 }

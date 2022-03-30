@@ -6,10 +6,11 @@
 #include <assert.h>
 #include <sstream>
 
+// template <typename T>
 class NumpySaver
 {
     typedef double T;
-    const char *file_name;
+    std::string file_name;
     bool warn = false;
     std::vector<std::vector<T> *> nums;
     std::stringstream header;
@@ -21,7 +22,7 @@ class NumpySaver
 
         assert(nums.size() != 0);
         std::ofstream file;
-        file.precision(5);
+        file.precision(precision);
         file << std::fixed;
         file.open(file_name, std::ofstream::out | std::ofstream::trunc);
 
@@ -50,6 +51,11 @@ public:
     };
 
     NumpySaver(const char *file_name)
+    {
+        this->file_name = std::string(file_name);
+    }
+
+    NumpySaver(std::string file_name)
     {
         this->file_name = file_name;
     }
@@ -101,6 +107,20 @@ public:
 
         std::vector<T> *num = new std::vector<T>(mat.size());
         Eigen::VectorXd::Map(&((*num)[0]), mat.size()) = mat.reshaped();
+        nums.push_back(num);
+        return *this;
+    }
+
+    template <typename Derived>
+    NumpySaver &operator<<(const Eigen::ArrayBase<Derived> &arr)
+    {
+        if (size == -1)
+            size = arr.size();
+        if (size != arr.size())
+            std::cerr << "Error saving numpy comform file: all nums/vectors must have the same length. Weird errors will occur!";
+
+        std::vector<T> *num = new std::vector<T>(arr.size());
+        Eigen::VectorXd::Map(&((*num)[0]), arr.size()) = arr.reshaped();
         nums.push_back(num);
         return *this;
     }
