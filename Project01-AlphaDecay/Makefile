@@ -14,8 +14,8 @@ build/output/pdf/barriers_test_100-Po-212-pot.pdf: visualize.py build/output/bar
 build/output/barriers_test_100-Po-212-pot.npy: build/$(EXECUTABLE) config.yaml | build
 	build/$(EXECUTABLE)
 
-build/exercise.zip: build/report.pdf | build
-	zip -r build/exercise build/report.pdf 
+build/exercise.zip: build/report.pdf | build FORCE
+	zip -r build/exercise alpha.cpp CMakeLists.txt conanfile.txt config.yaml Makefile references.bib report.md visualize.py include/utils/NumpySaver.hpp .gitignore
 
 build/conan.lock: conanfile.txt | build
 	conan install -of build -if build .
