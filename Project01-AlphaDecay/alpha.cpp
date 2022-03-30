@@ -84,18 +84,17 @@ Eigen::ArrayXd get_potential_realistic(Eigen::ArrayXd &r, double V0, double Z1, 
     Eigen::ArrayXd pot(r.rows() + 1);
     auto mid = get_middle_points(r);
 
-    pot[0] = alpha * hbarc * Z1 * Z2 / r[0] + V0;
-
     double a = 0.55;
 
-    for (unsigned int i = 1; i < pot.rows() - 1; i++)
+    for (unsigned int i = 0; i < pot.rows() - 2; i++)
     {
-        pot[i] = -V0 * (1 + std::cosh(R0 / a)) / (std::cosh(mid[i - 1] / a) + std::cosh(R0 / a));
-        if (mid[i - 1] >= R0)
-            pot[i] += alpha * hbarc * Z1 * Z2 / (mid[i - 1]);
+        pot[i] = V0 * (1 + std::cosh(R0 / a)) / (std::cosh(mid[i] / a) + std::cosh(R0 / a));
+        if (mid[i] >= R0)
+            pot[i] += alpha * hbarc * Z1 * Z2 / (mid[i]);
         else
-            pot[i] += alpha * hbarc * Z1 * Z2 / (2 * R0) * (3 - std::pow(mid[i - 1] / R0, 2));
+            pot[i] += alpha * hbarc * Z1 * Z2 / (2 * R0) * (3 - std::pow(mid[i] / R0, 2));
     }
+    pot[pot.rows() - 2] = 0;
     pot[pot.rows() - 1] = 0;
 
     return pot;
@@ -164,6 +163,30 @@ Eigen::SparseMatrix<mattype> get_matrix(Eigen::ArrayXcd &k, Eigen::ArrayXd &r)
     matrix.insert(2 * N + 2, 2 * N + 2) = -I * k[N + 1] * std::exp(I * k[N + 1] * r[N]);
 
     return matrix;
+}
+
+Eigen::ArrayXd get_pdf(Eigen::VectorXcd &sol, Eigen::ArrayXcd &k, Eigen::ArrayXd &r, Eigen::ArrayXd &r_plot)
+{
+    Eigen::ArrayXd pdf(r_plot.size());
+    int i_k = 0;
+
+    auto this_k = k[0];
+    auto this_r = r[0];
+    auto this_A = sol[0];
+    auto this_B = sol[1];
+    for (int i = 0; i < pdf.size(); i++)
+    {
+        while (r_plot[i] > this_r)
+        {
+            i_k++;
+            this_k = k[i_k];
+            this_r = r[i_k];
+            this_A = sol[2 * i_k];
+            this_B = sol[2 * i_k + 1];
+        }
+        pdf[i] = std::norm(this_A * std::exp(I * this_k * r_plot[i]) + this_B * std::exp(-I * this_k * r_plot[i]));
+    }
+    return pdf;
 }
 
 Eigen::VectorXcd get_rhs(int N)
@@ -272,6 +295,14 @@ void run_simulation(YAML::Node &simulation_settings, YAML::Node &data)
         {
             std::cerr << "Warning! R+T not equal to 1; R+T = " << R + T << "\n";
         }
+
+        // plot pdf
+        Eigen::ArrayXd r_plot = Eigen::ArrayXd::LinSpaced(1000, 0, R_last);
+        auto pdf = get_pdf(x, k, r, r_plot);
+
+        NumpySaver pdf_saver(std::string("build/output/" + name + "-" + symbol + "-pdf.npy")); // << r_plot << pdf;
+        pdf_saver.setPrecision(15);
+        pdf_saver << r_plot << pdf;
 
         double v = std::sqrt(2 * E_alpha / m_alpha) * c;              // m/s
         double half_life = std::log(2) * 2 * R0_this / T / v * 1e-15; // s

@@ -1,32 +1,157 @@
 simulation_settings:
-  - Name: simple
+  - Name: barriers_test_1
     N: 1
     R0: 1.3 #fm
     R_last: 100 #fm
     m: 3727.3793 #MeV
     V0: -134 #MeV
-    E_bind_alpha: 2.4249  # binding energy of alpha particle
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
     pot_method: integrate
-  - Name: complex
+  - Name: barriers_test_10
+    N: 10
+    R0: 1.3 #fm
+    R_last: 100 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: integrate
+  - Name: barriers_test_100
+    N: 100
+    R0: 1.3 #fm
+    R_last: 100 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: integrate
+  - Name: barriers_test_1000
     N: 1000
     R0: 1.3 #fm
     R_last: 100 #fm
     m: 3727.3793 #MeV
     V0: -134 #MeV
-    E_bind_alpha: 2.4249  # binding energy of alpha particle
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
     pot_method: integrate
-
+  - Name: barriers_test_2000
+    N: 2000
+    R0: 1.3 #fm
+    R_last: 100 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: integrate
+  - Name: rlast_test_10
+    N: 2000
+    R0: 1.3 #fm
+    R_last: 10 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: integrate
+  - Name: rlast_test_100
+    N: 2000
+    R0: 1.3 #fm
+    R_last: 100 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: integrate
+  - Name: rlast_test_1000
+    N: 2000
+    R0: 1.3 #fm
+    R_last: 1000 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: integrate
+  - Name: r0_test_1.3
+    N: 2000
+    R0: 1.3 #fm
+    R_last: 300 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: integrate
+  - Name: r0_test_1.4
+    N: 2000
+    R0: 1.4 #fm
+    R_last: 300 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: integrate
+  - Name: r0_test_1.5
+    N: 2000
+    R0: 1.5 #fm
+    R_last: 300 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: integrate
+  - Name: r0_test_1.45
+    N: 2000
+    R0: 1.45 #fm
+    R_last: 300 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: integrate
+  - Name: r0_test_1.445
+    N: 2000
+    R0: 1.445 #fm
+    R_last: 300 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: integrate
+  - Name: potential_test_left
+    N: 2000
+    R0: 1.45 #fm
+    R_last: 300 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: left
+  - Name: potential_test_right
+    N: 2000
+    R0: 1.45 #fm
+    R_last: 300 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: right
+  - Name: potential_test_middle
+    N: 2000
+    R0: 1.45 #fm
+    R_last: 300 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: middle
+  - Name: realistic
+    N: 1000
+    R0: 1.3 #fm
+    R_last: 100 #fm
+    m: 3727.3793 #MeV
+    V0: -134 #MeV
+    E_bind_alpha: 2.4249 # binding energy of alpha particle
+    pot_method: realistic
 
 data:
-  - Symbol: Po
-    A_parent: 212 # polonium
-    Z_parent: 84 # polonium
-    E_bind_p: -10.3694 # MeV
-    E_bind_d: -21.7480 # MeV
-    half_life: 299 # ns
-  - Symbol: U
+  - Symbol: U-238
     A_parent: 238
     Z_parent: 92
     E_bind_p: 47.3089 # MeV
     E_bind_d: 40.6140 # MeV
-    half_life: 4.468e9 # years
+    half_life: 1.4033e18 # s
+  - Symbol: Po-212
+    A_parent: 212 # polonium
+    Z_parent: 84 # polonium
+    E_bind_p: -10.3694 # MeV
+    E_bind_d: -21.7480 # MeV
+    half_life: 299e-9 # s
+  - Symbol: Rn-222
+    A_parent: 222
+    Z_parent: 86
+    E_bind_p: 16.366 # MeV
+    E_bind_d: 8.3516 # MeV
+    half_life: 330350.4 # s

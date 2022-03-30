@@ -10,7 +10,7 @@
 class NumpySaver
 {
     typedef double T;
-    const char *file_name;
+    std::string file_name;
     bool warn = false;
     std::vector<std::vector<T> *> nums;
     std::stringstream header;
@@ -22,7 +22,7 @@ class NumpySaver
 
         assert(nums.size() != 0);
         std::ofstream file;
-        file.precision(5);
+        file.precision(precision);
         file << std::fixed;
         file.open(file_name, std::ofstream::out | std::ofstream::trunc);
 
@@ -52,12 +52,12 @@ public:
 
     NumpySaver(const char *file_name)
     {
-        this->file_name = file_name;
+        this->file_name = std::string(file_name);
     }
 
     NumpySaver(std::string file_name)
     {
-        this->file_name = file_name.c_str();
+        this->file_name = file_name;
     }
 
     ~NumpySaver()

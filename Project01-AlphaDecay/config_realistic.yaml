@@ -1,12 +1,12 @@
 simulation_settings:
-  - Name: test
-    N: 1
-    R0: 1.3 #fm
-    R_last: 100 #fm
+  - Name: realistic
+    N: 10
+    R0: 1.45 #fm
+    R_last: 200 #fm
     m: 3727.3793 #MeV
     V0: -134 #MeV
     E_bind_alpha: 2.4249 # binding energy of alpha particle
-    pot_method: integrate
+    pot_method: realistic
 
 
 data:
