@@ -1,0 +1,9 @@
+inverse_iteration:
+  - dim: 3
+    shift: 
+      N: 10
+      start: -10
+      end: 10
+    max_iter: 1000
+    tol: 1e-4
+
