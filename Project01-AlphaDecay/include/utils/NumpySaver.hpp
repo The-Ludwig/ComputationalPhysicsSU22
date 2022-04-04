@@ -23,7 +23,7 @@ class NumpySaver
         assert(nums.size() != 0);
         std::ofstream file;
         file.precision(precision);
-        file << std::fixed;
+        file << std::scientific;
         file.open(file_name, std::ofstream::out | std::ofstream::trunc);
 
         file << "#" << header.str() << "\n";

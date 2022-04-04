@@ -27,6 +27,7 @@ for simulation in config["simulation_settings"]:
             f"build/output/pdf/{simulation['Name']}-{element['Symbol']}-pot.pdf"
         )
 
+        pdf = np.log(pdf)
         plt.plot(r_pdf, pdf * np.max(pot) / np.max(pdf), label="pdf")
         plt.ylabel("Potential V / MeV and Porbability Density / AU")
         plt.legend()
