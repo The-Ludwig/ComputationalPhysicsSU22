@@ -28,7 +28,7 @@ $(PLOT_PATHS)&: visualize.py $(OUTPUT_PATHS) | build
 $(OUTPUT_PATHS)&: build/$(EXECUTABLE) config.yaml | build
 	build/$(EXECUTABLE)
 
-build/$(EXECUTABLE): build/Makefile | build 
+build/$(EXECUTABLE): build/Makefile $(EXECUTABLE).cpp | build 
 	$(MAKE) -C build
 
 build/Makefile: build/conan_paths.cmake CMakeLists.txt | build
