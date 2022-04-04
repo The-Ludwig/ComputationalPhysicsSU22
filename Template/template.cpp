@@ -1,5 +1,3 @@
-
-
 #include <yaml-cpp/yaml.h>
 
 #include <Eigen/Dense>

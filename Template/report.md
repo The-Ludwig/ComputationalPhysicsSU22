@@ -16,7 +16,7 @@ $$
 e^{i\pi} = -1
 $$
 
-![This is a figure with a label, so it can be referenced! \label{fig}](build/test.pdf){ width=80% }
+![This is a figure with a label, so it can be referenced! \label{fig}](build/plots/test.pdf){ width=80% }
 
 Reference to \autoref{fig}, and also citations[@realistic]!
 
