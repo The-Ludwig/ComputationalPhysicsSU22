@@ -1,4 +1,111 @@
-name: test
-xmin:
-xmax:
-N: 3
+- N: 100
+  name: harmonic_100
+  potential: 
+    name: harmonic
+  xmin: -10
+  xmax: 10
+  shift: [1.5, 3.5, 5.5, 7.5, 9.5]
+  max_iter: 1000
+  tol: 1e-6
+- N: 1000
+  name: harmonic_1000
+  potential: 
+    name: harmonic
+  xmin: -10
+  xmax: 10
+  shift: [1.5, 3.5, 5.5, 7.5, 9.5]
+  max_iter: 1000
+  tol: 1e-6
+
+- N: 1000
+  name: shift_test
+  potential: 
+    name: harmonic
+  xmin: -10
+  xmax: 10
+  shift: [1.5, 3.5, 5.5, 7.5, 9.5]
+  max_iter: 1000
+  tol: 1e-6
+
+- N: 10000
+  name: harmonic_10000
+  potential: 
+    name: harmonic
+  xmin: -10
+  xmax: 10
+  shift: [1.5, 3.5, 5.5, 7.5, 9.5]
+  max_iter: 1000
+  tol: 1e-6
+- N: 1000
+  name: harmonic_1000_6
+  potential: 
+    name: harmonic
+  xmin: -6
+  xmax: 6
+  shift: [1.5, 3.5, 5.5, 7.5, 9.5]
+  max_iter: 1000
+  tol: 1e-6
+- N: 1000
+  name: harmonic_1000_5
+  potential: 
+    name: harmonic
+  xmin: -5
+  xmax: 5
+  shift: [1.5, 3.5, 5.5, 7.5, 9.5]
+  max_iter: 1000
+  tol: 1e-6
+- N: 1000
+  name: disturbed_small
+  potential: 
+    name: disturbed
+    c1: 1
+    c2: 10
+  xmin: -6
+  xmax: 6
+  shift: [1.1, 3.1, 5.1, 7.1, 9.1]
+  max_iter: 1000
+  tol: 1e-6
+- N: 1000
+  name: disturbed_big
+  potential: 
+    name: disturbed
+    c1: 5
+    c2: 10
+  xmin: -6
+  xmax: 6
+  shift: [1.1, 3.1, 5.1, 7.1, 9.1]
+  max_iter: 1000
+  tol: 1e-6
+- N: 1000
+  name: disturbed_pointy
+  potential: 
+    name: disturbed
+    c1: 50
+    c2: 100
+  xmin: -6
+  xmax: 6
+  shift: [1.1, 3.1, 5.1, 7.1, 9.1]
+  max_iter: 1000
+  tol: 1e-6
+
+- N: 1000
+  name: disturbed_wide
+  potential: 
+    name: disturbed
+    c1: 5
+    c2: 1
+  xmin: -6
+  xmax: 6
+  shift: [1.1, 3.1, 5.1, 7.1, 9.1]
+  max_iter: 1000
+  tol: 1e-6
+
+- N: 1000
+  name: plot
+  potential: 
+    name: harmonic
+  xmin: -10
+  xmax: 10
+  shift: [1, 3, 5, 7, 9]
+  max_iter: 1000
+  tol: 1e-6
