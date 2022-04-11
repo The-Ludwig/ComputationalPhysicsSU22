@@ -12,11 +12,20 @@ from yaml import safe_load
 
 test_distributions = np.genfromtxt("build/output/test_normal_distribution.npy").T
 
-print(test_distributions[0].shape)
-
-for distr in test_distributions:
-    plt.hist(distr, bins=10, density=True, histtype="step")
+plt.hist(
+    test_distributions[0], bins=30, density=True, histtype="step", label="Uniform Step"
+)
+plt.hist(
+    test_distributions[1], bins=30, density=True, histtype="step", label="Gaussian Step"
+)
 
 x = np.linspace(np.min(test_distributions), np.max(test_distributions), 1000)
-plt.plot(x, 1 / np.sqrt(2 * np.pi) * np.exp(-(x**2 / 2)))
+plt.plot(x, 1 / np.sqrt(2 * np.pi) * np.exp(-(x**2 / 2)), label="Expected")
+
+plt.xlabel("x")
+plt.ylabel("P(x)")
+
+plt.legend()
+plt.tight_layout()
 plt.savefig("build/plots/test_1D_distributions.pdf")
+plt.cla()

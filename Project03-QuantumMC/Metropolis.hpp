@@ -18,6 +18,7 @@ class MetropolisAlgorithm {
       std::uniform_real_distribution<>(0, 1);
   std::mt19937 gen;
 
+  // saving the old probability minimizes the function calls
   double p_old;
   std::size_t argument_index = 0;
 
@@ -25,19 +26,25 @@ class MetropolisAlgorithm {
   Argument argument;
 
   MetropolisAlgorithm(FunctionType pdf, Argument& argstart, StepRNG step,
-                      GeneratorResType seed)
+                      GeneratorResType seed,
+                      std::size_t warm_up = 100 * NumArguments)
       : pdf(pdf), argument(argstart), step(step) {
     gen = Generator(seed);  // Standard mersenne_twister_engine seeded with seed
 
     p_old = pdf(argument);
+
+    for (std::size_t i = 0; i < warm_up; i++) do_step();
   };
 
-  MetropolisAlgorithm(FunctionType pdf, Argument& argstart, StepRNG step)
-      : pdf(pdf), argument(argstart), step(step) {
+  MetropolisAlgorithm(FunctionType pdf, Argument& argstart, StepRNG step,
+                      std::size_t warm_up = 100 * NumArguments)
+      : pdf(pdf), step(step), argument(argstart) {
     std::random_device rd;
     gen = Generator(rd());  // Standard mersenne_twister_engine seeded with seed
 
     p_old = pdf(argument);
+
+    for (std::size_t i = 0; i < warm_up; i++) do_step();
   };
 
   void do_step() {
@@ -67,12 +74,17 @@ class MetropolisAlgorithm {
     }
   }
 
+  Argument& next() {
+    do_step();
+    return argument;
+  }
+
   Eigen::Array<double, Eigen::Dynamic, NumArguments> get_sample(
       Eigen::Index N) {
     using namespace Eigen;
     typedef Array<double, Eigen::Dynamic, NumArguments> ReturnType;
 
-    ReturnType returner(N);
+    ReturnType returner(N, NumArguments);
 
     for (Index i = 0; i < N; i++) {
       do_step();
