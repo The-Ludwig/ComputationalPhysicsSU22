@@ -32,7 +32,7 @@ find_package(yaml-cpp)
 add_library(utils INTERFACE)
 target_include_directories(utils INTERFACE include/utils)
 
-add_executable(${NAME} ${NAME}.cpp Metropolis.cpp)
+add_executable(${NAME} ${NAME}.cpp Metropolis.hpp)
 target_link_libraries(${NAME} PUBLIC utils)
 target_compile_features(${NAME} PUBLIC cxx_std_20)
 target_link_libraries(${NAME} PUBLIC Eigen3::Eigen PUBLIC yaml-cpp)
