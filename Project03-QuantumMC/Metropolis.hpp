@@ -79,6 +79,34 @@ class MetropolisAlgorithm {
     return argument;
   }
 
+  /**
+   * @brief Calculates the expectation value and the standard deviation of the
+   * given funtion (under the pdf)
+   *
+   * Using the Welfords online algorithm to calculate the mean and standard
+   * deviation.
+   *
+   * @param function function to average
+   * @param samples number of samples to collect
+   * @return std::tuple<double, double> Mean and Standard deviation in ms
+   */
+  std::tuple<double, double> average(
+      std::function<double(const Argument&)> function, std::size_t samples) {
+    std::size_t n = 1;
+    double mean = 0;
+    double mn = 0;
+
+    for (; n <= samples; n++) {
+      do_step();
+      double x = function(argument);
+      double add_mn = (x - mean);
+      mean += (x - mean) / double(n);
+      mn += (x - mean) * add_mn;
+    }
+
+    return {mean, mn / (n - 1)};
+  }
+
   Eigen::Array<double, Eigen::Dynamic, NumArguments> get_sample(
       Eigen::Index N) {
     using namespace Eigen;

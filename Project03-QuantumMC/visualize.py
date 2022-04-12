@@ -1,14 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 from yaml import safe_load
 
-# with open("config.yaml") as f:
-#     config = safe_load(f)
+sns.set_theme()
 
-# x, y = np.genfromtxt(f"build/output/{config['name']}.npy", unpack=True)
-
-# plt.plot(x, y)
-# plt.savefig(f"build/plots/{config['name']}.pdf")
+#############################
+# 1D Distribution
+#############################
 
 test_distributions = np.genfromtxt("build/output/test_normal_distribution.npy").T
 
@@ -29,3 +29,93 @@ plt.legend()
 plt.tight_layout()
 plt.savefig("build/plots/test_1D_distributions.pdf")
 plt.cla()
+
+
+def plot_energy(file_input, file_output):
+
+    alpha, energy, std = np.genfromtxt(file_input).T
+
+    # sns.lineplot(
+    #     x=alpha,
+    #     y=energy,
+    #     hue=std,
+    #     # style="event",
+    # )
+    plt.plot(alpha, energy)
+    plt.fill_between(
+        alpha, (energy - 0.5 * std), (energy + 0.5 * std), color="b", alpha=0.1
+    )
+
+    plt.xlabel(r"$\alpha$")
+    plt.ylabel(r"$\langle H \rangle / \hbar\omega$")
+
+    plt.tight_layout()
+    plt.savefig(file_output)
+    plt.cla()
+
+
+plot_energy("build/output/test_1d_energy.npy", "build/plots/1d_energy.pdf")
+
+##############################
+# 2D Distribution
+##############################
+x1, y1, x2, y2 = np.genfromtxt("build/output/test_2D_distribution.npy").T
+
+N = 100
+# plt.scatter(x1[:N], y1[:N])
+# plt.scatter(x2[:N], y2[:N])
+
+sns.kdeplot(
+    x=x1[:N],
+    y=y1[:N],
+    fill=True,
+    clip=(-3, 3),
+    thresh=0,
+    levels=50,
+    cmap="rocket",
+)
+
+plt.tight_layout()
+plt.savefig("build/plots/density_first_particle.pdf")
+plt.cla()
+
+
+sns.kdeplot(
+    x=x2[:N],
+    y=y2[:N],
+    fill=True,
+    clip=(-3, 3),
+    thresh=0,
+    levels=50,
+    cmap="rocket",
+)
+
+plt.tight_layout()
+plt.savefig("build/plots/density_second_particle.pdf")
+plt.cla()
+
+
+data_1 = pd.DataFrame(
+    data={"x": x1[:N], "y": y1[:N], "particle": np.zeros(N, dtype=int)}
+)
+data_2 = pd.DataFrame(
+    data={"x": x2[:N], "y": y2[:N], "particle": np.ones(N, dtype=int)}
+)
+data = pd.concat([data_1, data_2], ignore_index=True)
+print(data)
+
+# Show the joint distribution using kernel density estimation
+g = sns.jointplot(
+    data=data,
+    x="x",
+    y="y",
+    hue="particle",
+    kind="kde",
+)
+
+plt.tight_layout()
+plt.savefig("build/plots/density_combined.pdf")
+plt.clf()
+
+plot_energy("build/output/test_2d_energy_0.npy", "build/plots/2d_energy_0.pdf")
+plot_energy("build/output/test_2d_energy_1.npy", "build/plots/2d_energy_1.pdf")
