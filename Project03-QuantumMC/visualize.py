@@ -119,3 +119,49 @@ plt.clf()
 
 plot_energy("build/output/test_2d_energy_0.npy", "build/plots/2d_energy_0.pdf")
 plot_energy("build/output/test_2d_energy_1.npy", "build/plots/2d_energy_1.pdf")
+plot_energy("build/output/test_2d_energy_1.npy", "build/plots/2d_energy_2.pdf")
+plot_energy("build/output/test_2d_energy_8.npy", "build/plots/2d_energy_8.pdf")
+
+r_particles = np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+r1 = np.sqrt(x1**2 + y1**2)
+r2 = np.sqrt(x2**2 + y2**2)
+
+plt.hist(r_particles, bins=50, density=True)
+plt.xlabel("$r_{ij}$")
+plt.ylabel("$P(r_{ij})$")
+
+plt.tight_layout()
+plt.savefig("build/plots/r_distance.pdf")
+plt.clf()
+
+
+plt.hist(r1, bins=50, histtype="step", label="1", density=True)
+plt.hist(r2, bins=50, histtype="step", label="2", density=True)
+
+plt.xlabel("$r$")
+plt.ylabel("$P(r)$")
+
+plt.legend()
+plt.tight_layout()
+plt.savefig("build/plots/r_particles.pdf")
+plt.clf()
+
+
+sns.jointplot(x=r_particles, y=r1, kind="hex", color="#4CB391")
+plt.xlabel("$r_{ij}$")
+plt.ylabel("$r_1$")
+
+plt.legend()
+plt.tight_layout()
+plt.savefig("build/plots/hex_r1.pdf")
+plt.clf()
+
+
+sns.jointplot(x=r_particles, y=r2, kind="hex", color="#4CB391")
+plt.xlabel("$r_{ij}$")
+plt.ylabel("$r_2$")
+
+plt.legend()
+plt.tight_layout()
+plt.savefig("build/plots/hex_r2.pdf")
+plt.clf()
