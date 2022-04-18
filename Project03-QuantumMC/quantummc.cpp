@@ -169,18 +169,38 @@ void test_1D_metropolis() {
   auto test_2 = malg_normal.get_sample(100000);
 
   auto [mean, std] =
-      Timer::measure_time([&]() { malg_uniform.get_sample(100000); }, 1);
+      Timer::measure_time([&]() { malg_uniform.get_sample(100000); }, .1);
   cout << "Generating 100000 events with uniform step took " << mean << "±"
        << std << "ms\n";
 
   auto [mean_n, std_n] =
-      Timer::measure_time([&]() { malg_normal.get_sample(100000); }, 1);
+      Timer::measure_time([&]() { malg_normal.get_sample(100000); }, .1);
   cout << "Generating 100000 events with normal step took " << mean_n << "±"
        << std_n << "ms\n";
   NumpySaver("build/output/test_normal_distribution.npy") << test_1 << test_2;
 }
 
-void test_2D_metropolis() {
+double optimal_alpha_2d(double lambda, Index sample = 100000) {
+  using namespace std::placeholders;
+
+  Array4d argstart;
+  argstart << 0, 1, 0, -1;
+  std::normal_distribution<> step_gauss(0, 1);
+
+  std::function<double(double)> f = [&](double alpha) {
+    auto pdf = std::bind(pdf_wavefunction_2d, _1, alpha, lambda);
+    auto energy = std::bind(energy_2d, _1, alpha, lambda);
+    MetropolisAlgorithm<4, std::normal_distribution<> > malg(pdf, argstart,
+                                                             step_gauss);
+    auto [mean, std, var] = malg.average(energy, sample);
+    return mean;
+  };
+
+  auto [xmin, xmax] = golden_search(f, .1, 1, 1e-6);
+  return (xmin + xmax) / 2;
+}
+
+void test_2D_metropolis(double lambda = 1) {
   Array4d argstart;
   argstart << 0, 1, 0, -1;
 
@@ -188,7 +208,8 @@ void test_2D_metropolis() {
   std::normal_distribution<> step_gauss(0, 1);
 
   using namespace std::placeholders;
-  auto pdf_2d = std::bind(pdf_wavefunction_2d, _1, 1, 1);
+  double alpha = optimal_alpha_2d(lambda);
+  auto pdf_2d = std::bind(pdf_wavefunction_2d, _1, alpha, lambda);
 
   MetropolisAlgorithm<4, std::normal_distribution<> > malg_normal(
       pdf_2d, argstart, step_gauss);
@@ -196,7 +217,7 @@ void test_2D_metropolis() {
   auto test_1 = malg_normal.get_sample(100000);
 
   auto [mean, std] =
-      Timer::measure_time([&]() { malg_normal.get_sample(100000); }, 1);
+      Timer::measure_time([&]() { malg_normal.get_sample(100000); }, .1);
   cout << "Generating 100000 2D events with uniform step took " << mean << "±"
        << std << "ms\n";
 
@@ -214,18 +235,21 @@ void test_1D_energy(Index n = 300) {
   ArrayXd alphas = ArrayXd::LinSpaced(n, 0.1, 1);
   ArrayXd means(n);
   ArrayXd stds(n);
+  ArrayXd vars(n);
 
   for (Index i = 0; i < n; i++) {
     auto pdf_normal = std::bind(pdf_1d, _1, alphas[i]);
     auto energy = std::bind(energy_1d, _1, alphas[i]);
     MetropolisAlgorithm<1, std::normal_distribution<> > malg_normal(
         pdf_normal, argstart, step_gauss);
-    auto [mean, std] = malg_normal.average(energy, 100000);
+    auto [mean, std, var] = malg_normal.average(energy, 100000);
     means[i] = mean;
     stds[i] = std;
+    vars[i] = var;
   }
 
-  NumpySaver("build/output/test_1d_energy.npy") << alphas << means << stds;
+  NumpySaver("build/output/test_1d_energy.npy")
+      << alphas << means << stds << vars;
 }
 
 void test_2D_energy(Index n = 300, double lambda = 1) {
@@ -238,19 +262,42 @@ void test_2D_energy(Index n = 300, double lambda = 1) {
   ArrayXd alphas = ArrayXd::LinSpaced(n, 0.1, 1);
   ArrayXd means(n);
   ArrayXd stds(n);
+  ArrayXd vars(n);
 
   for (Index i = 0; i < n; i++) {
     auto pdf = std::bind(pdf_wavefunction_2d, _1, alphas[i], lambda);
     auto energy = std::bind(energy_2d, _1, alphas[i], lambda);
     MetropolisAlgorithm<4, std::normal_distribution<> > malg(pdf, argstart,
                                                              step_gauss);
-    auto [mean, std] = malg.average(energy, 100000);
+    auto [mean, std, var] = malg.average(energy, 100000);
     means[i] = mean;
     stds[i] = std;
+    vars[i] = var;
   }
 
   NumpySaver(fmt::format("build/output/test_2d_energy_{}.npy", lambda))
-      << alphas << means << stds;
+      << alphas << means << stds << vars;
+}
+
+void find_1d_alpha(Index sample = 1000000) {
+  using namespace std::placeholders;
+
+  Array1d argstart;
+  argstart << 0;
+  std::normal_distribution<> step_gauss(0, 1);
+
+  std::function<double(double)> f = [&](double alpha) {
+    auto pdf = std::bind(pdf_1d, _1, alpha);
+    auto energy = std::bind(energy_1d, _1, alpha);
+    MetropolisAlgorithm<1, std::normal_distribution<> > malg(pdf, argstart,
+                                                             step_gauss);
+    auto [mean, std, var] = malg.average(energy, sample);
+    return mean;
+  };
+
+  auto [xmin, xmax] = golden_search(f, .1, 1, 1e-6);
+  cout << "Optimal α for 1D case is between " << xmin << " and " << xmax << " ("
+       << f(xmin) << " < E <" << f(xmax) << ")" << endl;
 }
 
 void find_2d_alpha(double lambda = 1, Index sample = 1000000) {
@@ -265,7 +312,7 @@ void find_2d_alpha(double lambda = 1, Index sample = 1000000) {
     auto energy = std::bind(energy_2d, _1, alpha, lambda);
     MetropolisAlgorithm<4, std::normal_distribution<> > malg(pdf, argstart,
                                                              step_gauss);
-    auto [mean, std] = malg.average(energy, sample);
+    auto [mean, std, var] = malg.average(energy, sample);
     return mean;
   };
 
@@ -288,7 +335,8 @@ void find_2d_alpha_adaptive(double lambda = 1) {
         auto energy = std::bind(energy_2d, _1, alpha, lambda);
         MetropolisAlgorithm<4, std::normal_distribution<> > malg(pdf, argstart,
                                                                  step_gauss);
-        return malg.average(energy, sample);
+        auto [mean, std, var] = malg.average(energy, sample);
+        return std::tuple<double, double>({mean, std});
       };
 
   auto [xmin, xmax] = adaptive_golden_search(f, .1, 1, 1e-6);
@@ -296,7 +344,14 @@ void find_2d_alpha_adaptive(double lambda = 1) {
        << xmin << " and " << xmax << endl;
 }
 
+void energy_function_test() {
+  cout << "E_2d(1, 0, 2, 0|λ=1,α=1)=" << energy_2d({1, 0, 2, 0}, 1, 1) << endl;
+  cout << "E_2d(1.1, 3.1, -5.6, -5|λ=2.1,α=1.1)="
+       << energy_2d({1.1, 3.1, -5.6, -5}, 1.1, 2.1) << endl;
+}
+
 int main(int argc, char const* argv[]) {
+  energy_function_test();
   test_1D_metropolis();
   test_2D_metropolis();
   test_1D_energy();
@@ -304,6 +359,7 @@ int main(int argc, char const* argv[]) {
   test_2D_energy(300, 1);
   test_2D_energy(300, 2);
   test_2D_energy(300, 8);
+  find_1d_alpha();
   find_2d_alpha(0);
   find_2d_alpha(1);
   find_2d_alpha(2);

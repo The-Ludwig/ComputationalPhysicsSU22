@@ -31,9 +31,9 @@ plt.savefig("build/plots/test_1D_distributions.pdf")
 plt.cla()
 
 
-def plot_energy(file_input, file_output):
+def plot_energy(file_input, file_output, analytically=None):
 
-    alpha, energy, std = np.genfromtxt(file_input).T
+    alpha, energy, std, variance = np.genfromtxt(file_input).T
 
     # sns.lineplot(
     #     x=alpha,
@@ -41,27 +41,59 @@ def plot_energy(file_input, file_output):
     #     hue=std,
     #     # style="event",
     # )
-    plt.plot(alpha, energy)
-    plt.fill_between(
-        alpha, (energy - 0.5 * std), (energy + 0.5 * std), color="b", alpha=0.1
-    )
+    std = np.sqrt(variance)
+
+    if analytically is not None:
+        plt.plot(alpha, analytically(alpha), label="Analytical")
+    plt.plot(alpha, energy, label="MC")
 
     plt.xlabel(r"$\alpha$")
-    plt.ylabel(r"$\langle H \rangle / \hbar\omega$")
+    plt.ylabel(r"$\langle E_\alpha \rangle / \hbar\omega$")
 
+    # plt.gcf().legend(loc="upper center")
     plt.tight_layout()
-    plt.savefig(file_output)
-    plt.cla()
+    plt.savefig(file_output + "_no_std.pdf")
+
+    plt.ylabel(
+        r"$\left(\langle E_\alpha \rangle\pm 0.5 \cdot\sigma_{E_\alpha }\right) / \hbar\omega$"
+    )
+
+    enlarge = 1 / 1.96 / 2
+    plt.fill_between(
+        alpha,
+        (energy - enlarge * 1.96 * std),
+        (energy + enlarge * 1.96 * std),
+        color="b",
+        alpha=0.1,
+        label="1 $\sigma$ Interval",
+    )
+
+    plt.gcf().legend(loc="upper center")
+    plt.tight_layout()
+    plt.savefig(file_output + ".pdf")
+
+    othera = plt.gca().twinx()
+    othera.plot(alpha, variance, label="Variance", color="red")
+    othera.set_ylabel(r"Variance $\sigma^2_{E_\alpha}$")
+    plt.gcf().legend(loc="upper center")
+    plt.tight_layout()
+    plt.savefig(file_output + "_variance.pdf")
+
+    plt.clf()
 
 
-plot_energy("build/output/test_1d_energy.npy", "build/plots/1d_energy.pdf")
+plot_energy(
+    "build/output/test_1d_energy.npy",
+    "build/plots/1d_energy",
+    analytically=lambda a: a + (1 / 2 - 2 * a**2) / 4 / a,
+)
 
 ##############################
 # 2D Distribution
 ##############################
 x1, y1, x2, y2 = np.genfromtxt("build/output/test_2D_distribution.npy").T
 
-N = 100
+N = 100000
 # plt.scatter(x1[:N], y1[:N])
 # plt.scatter(x2[:N], y2[:N])
 
@@ -117,10 +149,10 @@ plt.tight_layout()
 plt.savefig("build/plots/density_combined.pdf")
 plt.clf()
 
-plot_energy("build/output/test_2d_energy_0.npy", "build/plots/2d_energy_0.pdf")
-plot_energy("build/output/test_2d_energy_1.npy", "build/plots/2d_energy_1.pdf")
-plot_energy("build/output/test_2d_energy_1.npy", "build/plots/2d_energy_2.pdf")
-plot_energy("build/output/test_2d_energy_8.npy", "build/plots/2d_energy_8.pdf")
+plot_energy("build/output/test_2d_energy_0.npy", "build/plots/2d_energy_0")
+plot_energy("build/output/test_2d_energy_1.npy", "build/plots/2d_energy_1")
+plot_energy("build/output/test_2d_energy_2.npy", "build/plots/2d_energy_2")
+plot_energy("build/output/test_2d_energy_8.npy", "build/plots/2d_energy_8")
 
 r_particles = np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 r1 = np.sqrt(x1**2 + y1**2)

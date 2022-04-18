@@ -25,27 +25,26 @@ class Timer {
    * Using the Welfords online algorithm to calculate the mean and standard
    * deviation.
    *
-   * @param time_limit_s Time limit for measuring performance
+   * @param precision Time limit for measuring performance in ms
    * @return std::tuple<double, double> Mean and Standard deviation in ms
    */
   static std::tuple<double, double> measure_time(std::function<void()> function,
-                                                 double time_limit_s = 5) {
+                                                 double precision = .1) {
     unsigned int n = 0;
     double mean = 0;
-    double mn = 0;
+    double S = 0;
 
-    Timer timer;
     Timer lap;
-    while (timer.elapsed_s() < time_limit_s) {
+    do {
       lap.reset();
       function();
       double lap_time = lap.elapsed_ms();
       n++;
-      double add_mn = (lap_time - mean);
+      double old_mean = mean;
       mean += (lap_time - mean) / double(n);
-      mn += (lap_time - mean) * add_mn;
-    }
+      S += (lap_time - mean) * (lap_time - old_mean);
+    } while (n < 10 || std::sqrt(S / (n * n) > precision));
 
-    return {mean, mn / (n - 1)};
+    return {mean, std::sqrt(S / (n - 1))};
   }
 };

@@ -88,23 +88,26 @@ class MetropolisAlgorithm {
    *
    * @param function function to average
    * @param samples number of samples to collect
-   * @return std::tuple<double, double> Mean and Standard deviation in ms
+   * @return std::tuple<double, double, double> Mean, std of mean, variance
    */
-  std::tuple<double, double> average(
+  std::tuple<double, double, double> average(
       std::function<double(const Argument&)> function, std::size_t samples) {
-    std::size_t n = 1;
+    std::size_t n;
     double mean = 0;
-    double mn = 0;
+    // double mean2 = 0;
+    double S = 0;
 
-    for (; n <= samples; n++) {
+    for (n = 1; n <= samples; n++) {
       do_step();
       double x = function(argument);
-      double add_mn = (x - mean);
+      double old_mean = mean;
       mean += (x - mean) / double(n);
-      mn += (x - mean) * add_mn;
+      // mean2 += (x * x - mean2) / double(n);
+      S += (x - mean) * (x - old_mean);
     }
 
-    return {mean, mn / (n - 1)};
+    // return {mean, std::sqrt(mean2 - mean * mean)};
+    return {mean, std::sqrt(S / (samples - 1) / samples), S / (samples - 1)};
   }
 
   Eigen::Array<double, Eigen::Dynamic, NumArguments> get_sample(
