@@ -3,7 +3,17 @@ title: Computational Physics -- N -- The Project
 author:
 - Ludwig Neste
 header-includes: |
-    \usepackage{multirow}
+    \usepackage{blindtext}
+    \usepackage[section, below]{placeins}
+papersize: a4
+fontfamily: libertinus
+geometry: 
+- left=1cm
+- right=1cm
+- top=2cm
+- bottom=2cm
+classoption:
+- twocolumn
 nocite: |
   @*
 abstract: |
@@ -16,8 +26,10 @@ $$
 e^{i\pi} = -1
 $$
 
-![This is a figure with a label, so it can be referenced! \label{fig}](build/plots/test.pdf){ width=80% }
+![This is a figure with a label, so it can be referenced! \label{fig}](build/plots/test.pdf){ width=40% }
 
 Reference to \autoref{fig}, and also citations[@realistic]!
+
+\Blindtext
 
 # References
