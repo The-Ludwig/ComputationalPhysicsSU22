@@ -1,5 +1,5 @@
 /**
- * @file bspline.hpp
+ * @file bsplines.hpp
  * @author Ludwig Neste
  * @brief Implemenation of an efficient algorithm to calculate the values of
  * BSplines and their derivatives in modern C++ using `std::vector`.
@@ -21,7 +21,7 @@
 #include <tuple>
 #include <vector>
 
-namespace bspline {
+namespace bsplines {
 
 /**
  * @brief Returns the non-zero B-splines at x.
@@ -231,4 +231,4 @@ std::tuple<std::vector<T>, std::size_t> ndx_bsplines(
   return {iter, idx};
 }
 
-}  // namespace bspline
+}  // namespace bsplines
