@@ -18,7 +18,7 @@ endif()
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
 
 set(NAME "test" CACHE STRING "The name of the project, `name.cpp` must be the main file.")
 
@@ -28,6 +28,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(${CMAKE_BINARY_DIR}/conan_paths.cmake)
 find_package(Eigen3)
 find_package(yaml-cpp)
+find_package(fmt)
 
 add_library(utils INTERFACE)
 target_include_directories(utils INTERFACE include/utils)
@@ -35,4 +36,4 @@ target_include_directories(utils INTERFACE include/utils)
 add_executable(${NAME} ${NAME}.cpp)
 target_link_libraries(${NAME} PUBLIC utils)
 target_compile_features(${NAME} PUBLIC cxx_std_20)
-target_link_libraries(${NAME} PUBLIC Eigen3::Eigen PUBLIC yaml-cpp)
+target_link_libraries(${NAME} PUBLIC Eigen3::Eigen PUBLIC yaml-cpp fmt)

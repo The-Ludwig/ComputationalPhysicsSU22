@@ -3,7 +3,7 @@ PLOTS=test.pdf
 OUTPUT=test.npy
 
 # 'Debug' or 'Release'
-BUILD_TYPE=Release
+BUILD_TYPE=Debug
 
 GCC_PATH=$(shell which g++)
 
