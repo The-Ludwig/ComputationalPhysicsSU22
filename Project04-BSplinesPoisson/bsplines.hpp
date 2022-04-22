@@ -1,6 +1,6 @@
 /**
  * @file bsplines.hpp
- * @author Ludwig Neste
+ * @author Jan Ullmann & Ludwig Neste
  * @brief Implemenation of an efficient algorithm to calculate the values of
  * BSplines and their derivatives in modern C++ using `std::vector`.
  * (C++ 17 required, compile with `-std=c++17`)

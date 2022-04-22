@@ -1,9 +1,9 @@
 EXECUTABLE=$(shell pwd |  sed -e 's/.*\///' -e 's/\(.*\)/\L\1/' -e 's/project[0-9][0-9]-//')
-PLOTS=test.pdf
-OUTPUT=test.npy
+PLOTS=wide_few_hydrogen.pdf
+OUTPUT=plot_splines.npy
 
 # 'Debug' or 'Release'
-BUILD_TYPE=Debug
+BUILD_TYPE=Release
 
 GCC_PATH=$(shell which g++)
 

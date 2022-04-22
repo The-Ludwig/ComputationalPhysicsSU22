@@ -1,2 +1,66 @@
-dim: 9
-name: test
+- name: few_knots
+  R: 1
+  R1: .5
+  R2: 1
+  q: 1
+  e: 1
+  r_bohr: 1
+  knots: [0, .5, 1, 1.5, 2]
+
+- name: many_knots
+  R: 1
+  R1: .5
+  R2: 1
+  q: 1
+  e: 1
+  r_bohr: 1
+  knots: 
+    start: 0
+    end: 1
+    N: 1000
+
+
+- name: wide_few
+  R: 1
+  R1: .5
+  R2: 1
+  q: 1
+  e: 1
+  r_bohr: 1
+  knots: 
+    start: 0
+    end: 5
+    N: 15
+
+- name: wide_more
+  R: 1
+  R1: .5
+  R2: 1
+  q: 1
+  e: 1
+  r_bohr: 1
+  knots: 
+    start: 0
+    end: 5
+    N: 100
+
+- name: wide_many
+  R: 1
+  R1: .5
+  R2: 1
+  q: 1
+  e: 1
+  r_bohr: 1
+  knots: 
+    start: 0
+    end: 5
+    N: 1000
+
+- name: extra_knots
+  R: 1
+  R1: .5
+  R2: 1
+  q: 1
+  e: 1
+  r_bohr: 1
+  knots: [0, .4, .4999999999999999, .5000000000000001, .6, .9, .999999999999, 1.000000001, 1.1, 1.2, 2.6]

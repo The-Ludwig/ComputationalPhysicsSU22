@@ -4,8 +4,20 @@
 
 #include <vector>
 
+// copied from https://gist.github.com/lorenzoriano/5414671
+template <typename T>
+std::vector<T> linspace(T start, T end, size_t N) {
+  T h = (end - start) / static_cast<T>(N - 1);
+  std::vector<T> xs(N);
+  typename std::vector<T>::iterator x;
+  T val;
+  for (x = xs.begin(), val = start; x != xs.end(); ++x, val += h) *x = val;
+  return xs;
+}
+
 template <typename T>
 std::vector<T> get_yaml_values(YAML::Node& node) {
+  using namespace std;
   auto type = node.Type();
   // single value
   if (type == YAML::NodeType::Scalar) {
