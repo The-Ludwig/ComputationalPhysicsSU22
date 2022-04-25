@@ -1,0 +1,8 @@
+[requires]
+eigen/3.4.0
+yaml-cpp/0.7.0
+boost/1.78.0
+
+[generators]
+cmake_find_package
+cmake_paths
