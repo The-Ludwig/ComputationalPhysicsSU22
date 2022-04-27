@@ -1,2 +1,43 @@
-dim: 9
-name: test
+- name: test
+  l: 0
+  Z: 1
+  plot: false
+  knots: 
+    type: linear # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 100
+    rmin: 0
+    rmax: 100
+
+- name: test_exp
+  l: 0
+  Z: 1
+  plot: false
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 100
+    rmin: 0
+    rmax: 100
+
+- name: test_jan
+  l: 0
+  Z: 1
+  plot: false
+  knots: 
+    type: linear # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 11
+    rmin: 0
+    rmax: 1
+
+- name: good
+  l: 0
+  Z: 1
+  plot: true
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 1000

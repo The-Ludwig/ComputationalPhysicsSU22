@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from yaml import safe_load
-
-with open("config.yaml") as f:
-    config = safe_load(f)
 
 
-x, y = np.genfromtxt(f"build/output/{config['name']}.npy", unpack=True)
+data = np.genfromtxt("build/output/good_plot_points.npy").T
 
-plt.plot(x, y)
-plt.savefig(f"build/plots/{config['name']}.pdf")
+x, y = data[0], data[1]
+mask = x <= 1
+
+plt.plot(x[mask], y[mask])
+plt.tight_layout()
+plt.savefig("build/plots/good_plot.pdf")

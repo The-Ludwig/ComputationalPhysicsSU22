@@ -1,3 +1,4 @@
+#include <fmt/core.h>
 #include <yaml-cpp/yaml.h>
 
 #include <Eigen/Dense>
@@ -10,40 +11,31 @@
 #include "bsplines.hpp"
 
 using namespace Eigen;
-using std::cout, std::endl;
+using std::cout, std::endl, std::cerr;
+
+const char* devider = "##########################################";
 
 template <int num_points>
 double matrix_B_element(int i, int j, std::vector<double>& knots, Index order) {
   using boost::math::quadrature::gauss;
+
+  if (std::abs((int)i - (int)j) > order) return 0;
+
   int imax = std::max(i, j);
   int imin = std::min(i, j);
 
-  int dif = imax - imin;
-
-  if (dif >= order) return 0;
-
   Index n = knots.size();
 
-  // alternatively do it between each knot
-  // double sum = 0;
-  // for (int i = std::max(0, imax); i < std::min(imin + order, n - 1); i++) {
-  //   cout << i << "-" << i + 1 << "=" << knots[i + 1] - knots[i] << endl;
-  // auto f = [&](const double& t) {
-  //     auto [values, idx] = bsplines::bsplines(t, knots, order);
-  //     return values[imax - ((int)idx - (int)order)] *
-  //            values[imin - ((int)idx - (int)order)];
-  //   };
-  //   sum += gauss<double, num_points>::integrate(
-  //       f, knots[i], knots[i+1]);
-  // }
+  double sum = 0;
 
-  auto f = [&](const double& t) {
-    auto [values, idx] = bsplines::bsplines(t, knots, order);
-    return values[imax - ((int)idx - (int)order)] *
-           values[imin - ((int)idx - (int)order)];
-  };
-  double sum = gauss<double, num_points>::integrate(
-      f, knots[std::max(0, imax)], knots[std::min(imin + order, n - 1)]);
+  for (int k = std::max(0, imax - 1); k < std::min(imin + order + 1, n - 1);
+       k++) {
+    auto f = [&](const double& t) {
+      auto [values, idx] = bsplines::bsplines(t, knots, order);
+      return values[i + order - idx] * values[j + order - idx];
+    };
+    sum += gauss<double, num_points>::integrate(f, knots[k], knots[k + 1]);
+  }
 
   return sum;
 }
@@ -52,28 +44,28 @@ template <int num_points>
 double matrix_H_element(int i, int j, std::vector<double>& knots, Index order,
                         int l, int z) {
   using boost::math::quadrature::gauss;
+  if (std::abs((int)i - (int)j) > order) return 0;
+
+  Index n = knots.size();
   int imax = std::max(i, j);
   int imin = std::min(i, j);
 
-  int dif = imax - imin;
+  double sum = 0;
 
-  if (dif > order) return 0;
+  for (int k = std::max(0, imax - 1); k < std::min(imin + order + 1, n - 1);
+       k++) {
+    auto f = [&](const double& t) {
+      auto [values, idx] = bsplines::bsplines(t, knots, order);
+      auto [values_dd, idx_dd] = bsplines::ndx_bsplines(t, knots, order, 2);
+      double h_val =
+          -values_dd[j - (idx - order)] / 2. +
+          (l * (l + 1.) / (t * t * 2.) - z / t) * values[j - (idx - order)];
+      return values[i - (idx - order)] * h_val;
+      ;
+    };
 
-  Index n = knots.size();
-
-  auto f = [&](const double& t) {
-    auto [values, idx] = bsplines::bsplines(t, knots, order);
-    auto [values_dd, idx_dd] = bsplines::ndx_bsplines(t, knots, order, 2);
-    double h_val =
-        -values_dd[j - (idx - order)] / 2. +
-        (l * (l + 1.) / (t * t * 2.) - z / t) * values[j - (idx - order)];
-    return values[i - (idx - order)] * h_val;
-    ;
-  };
-
-  double sum = gauss<double, num_points>::integrate(
-      f, knots[std::max(0, imax)], knots[std::min(imin + order, n - 1)]);
-
+    sum += gauss<double, num_points>::integrate(f, knots[k], knots[k + 1]);
+  }
   return sum;
 }
 
@@ -82,12 +74,10 @@ MatrixXd matrix_B(std::vector<double>& knots, Index order) {
   Index n = knots.size();
   MatrixXd mat(n - 3 + order, n - 3 + order);
 
-  for (int row = 0; row < mat.rows(); row++) {
-    for (int col = 0; col < mat.cols(); col++) {
+  for (int row = 0; row < mat.rows(); row++)
+    for (int col = 0; col < mat.cols(); col++)
       mat(row, col) = matrix_B_element<num_points>(
           row - order + 1, col - order + 1, knots, order);
-    }
-  }
 
   return mat;
 }
@@ -97,33 +87,149 @@ MatrixXd matrix_H(std::vector<double>& knots, Index order, int l, int z) {
   Index n = knots.size();
   MatrixXd mat(n - 3 + order, n - 3 + order);
 
-  for (int row = 0; row < mat.rows(); row++) {
-    for (int col = 0; col < mat.cols(); col++) {
+  for (int row = 0; row < mat.rows(); row++)
+    for (int col = 0; col < mat.cols(); col++)
       mat(row, col) = matrix_H_element<num_points>(
           row - order + 1, col - order + 1, knots, order, l, z);
-    }
-  }
 
   return mat;
 }
 
-int main() {
-  int n_knots = 15;
-  std::vector<double> knots(n_knots);
-  Map<ArrayXd> eigen_knots(knots.data(), knots.size());
-  eigen_knots = ArrayXd::LinSpaced(n_knots, 0, 10);
+double evaluate_spline(const double& x, const std::vector<double>& knots,
+                       const VectorXd& weights, std::size_t order) {
+  auto n = knots.size();
+  assert(int(n + order) - 3 == weights.size());
 
-  cout << "knots = " << eigen_knots.transpose() << endl;
+  auto [values, index] = bsplines::bsplines(x, knots, order);
 
-  auto B = matrix_B<3000>(knots, 3);
-  auto H = matrix_H<3000>(knots, 3, 0, 1);
+  double sum = 0;
+  for (std::size_t i = std::max(int(index) - 1, 0);
+       i <= std::min(index - 1 + order, n + order - 4); i++)
+    sum += values[i + 1 - index] * weights[i];
 
-  cout << "B=\n" << B << "\n\n";
-  cout << "H=\n" << H << endl;
+  return sum;
+}
+
+template <int order>
+void solve(std::vector<double>& knots, std::string& basefilename, bool plot,
+           int l, int z) {
+  constexpr int gauss_points = order * 1.5;
+  int n_knots = knots.size();
+
+  cout << "knots = ";
+  for (auto k : knots) cout << k << ", ";
+  cout << endl;
+
+  auto B = matrix_B<gauss_points>(knots, order);
+  auto H = matrix_H<gauss_points>(knots, order, l, z);
+
+  if (knots.size() < 20) {
+    cout << "B=\n" << B << "\n\n";
+    cout << "H=\n" << H << endl;
+  }
 
   GeneralizedEigenSolver<MatrixXd> ges;
   ges.compute(H, B);
-  cout << "Eigenvalues: " << ges.eigenvalues().transpose() << endl;
+  VectorXcd eigenvalues = ges.eigenvalues();
+  VectorXd real_eigen = eigenvalues.real();
 
-  return 0;
+  // sort the eigenvalues
+  std::sort(real_eigen.data(), real_eigen.data() + real_eigen.size());
+
+  if (eigenvalues.imag().cwiseAbs().sum() > 10e-10) {
+    cerr << "Error: Complex eigenvalues!" << endl;
+  }
+
+  cout << "Eigenvalues: " << real_eigen.transpose() << endl;
+
+  MatrixXd eigenvectors = ges.eigenvectors().real();
+
+  NumpySaver(fmt::format("build/output/{}_eigenvalues.npy", basefilename))
+      << real_eigen;
+  NumpySaver(fmt::format("build/output/{}_knots.npy", basefilename)) << knots;
+
+  NumpySaver eigvec_saver(
+      fmt::format("build/output/{}_eigenvectors.npy", basefilename));
+  for (int col = 0; col < eigenvectors.cols(); col++)
+    eigvec_saver << eigenvectors.col(col);
+
+  if (plot) {
+    ArrayXd x = ArrayXd::LinSpaced(1000, 0, 10);
+    MatrixXd points(x.size(), eigenvectors.cols());
+    for (int row = 0; row < x.size(); row++)
+      for (int col = 0; col < points.cols(); col++)
+        points(row, col) =
+            evaluate_spline(x[row], knots, eigenvectors.col(col), order);
+
+    NumpySaver plot_saver(
+        fmt::format("build/output/{}_plot_points.npy", basefilename));
+    plot_saver << x;
+    for (int col = 0; col < points.cols(); col++) plot_saver << points.col(col);
+  }
+}
+
+template <int order>
+void solve_exp(int n_knots, double rmin, double rmax, double exp_fak,
+               std::string& basefilename, bool plot, int l, int z) {
+  std::vector<double> knots(n_knots);
+  for (int i = 0; i < n_knots; i++)
+    knots[i] = (rmax - rmin) *
+                   (std::exp(double(i) / double(n_knots - 1) * exp_fak) - 1.) /
+                   (std::exp(exp_fak) - 1) +
+               rmin;
+
+  solve<order>(knots, basefilename, plot, l, z);
+}
+
+template <int order>
+void solve_lin(int n_knots, double rmin, double rmax, std::string& basefilename,
+               bool plot, int l, int z) {
+  std::vector<double> knots(n_knots);
+  for (int i = 0; i < n_knots; i++)
+    knots[i] = double(i) / double(n_knots - 1) * (rmax - rmin) + rmin;
+
+  solve<order>(knots, basefilename, plot, l, z);
+}
+
+int main() {
+  YAML::Node configs = YAML::LoadFile("config.yaml");
+
+  constexpr int order = 3;
+
+  for (std::size_t i = 0; i < configs.size(); i++) {
+    YAML::Node config = configs[i];
+    auto plot = config["plot"].as<bool>();
+    auto l = config["l"].as<int>();
+    auto z = config["Z"].as<int>();
+    auto basefilename = config["name"].as<std::string>();
+
+    fmt::print("\n\n{0}\n# Simulation '{1}' {2}/{3}\n{0}\n", devider,
+               basefilename, i + 1, configs.size());
+
+    YAML::Node knot_node = config["knots"];
+    auto type = knot_node.Type();
+    // single value
+    if (type == YAML::NodeType::Sequence) {
+      auto knots = knot_node.as<std::vector<double> >();
+      solve<order>(knots, basefilename, plot, l, z);
+    } else if (type == YAML::NodeType::Map) {
+      auto rmin = knot_node["rmin"].as<double>();
+      auto rmax = knot_node["rmax"].as<double>();
+      auto N = knot_node["N"].as<size_t>();
+      auto type = knot_node["type"].as<std::string>();
+      if (type == "linear") {
+        solve_lin<order>(N, rmin, rmax, basefilename, plot, l, z);
+      } else if (type == "exponential") {
+        auto expfac = knot_node["expfac"].as<double>();
+        solve_exp<order>(N, rmin, rmax, expfac, basefilename, plot, l, z);
+      } else {
+        throw std::runtime_error(
+            "'type' of knots must either be 'linear' or 'exponential'.");
+      }
+    } else {
+      throw std::runtime_error(
+          "Range node must either be list, scalar or a map defining "
+          "'type', 'N', 'rmin' and 'rmax'.");
+    }
+  }
 }
