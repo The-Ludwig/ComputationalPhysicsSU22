@@ -1,8 +1,10 @@
+#include <Spectra/MatOp/SparseCholesky.h>
+#include <Spectra/MatOp/SparseSymMatProd.h>
+#include <Spectra/SymGEigsSolver.h>
 #include <fmt/core.h>
 #include <yaml-cpp/yaml.h>
 
-#include <Eigen/Dense>
-#include <Eigen/Eigenvalues>
+#include <Eigen/Sparse>
 #include <boost/math/quadrature/gauss.hpp>
 #include <iostream>
 #include <numeric>
@@ -72,26 +74,31 @@ double matrix_H_element(int i, int j, std::vector<double>& knots, Index order,
 }
 
 template <int num_points>
-MatrixXd matrix_B(std::vector<double>& knots, Index order) {
+SparseMatrix<double> matrix_B(std::vector<double>& knots, Index order) {
   Index n = knots.size();
-  MatrixXd mat(n - 3 + order, n - 3 + order);
+  SparseMatrix<double> mat(n - 3 + order, n - 3 + order);
+  mat.reserve((n - 3 + order) * 2 * order + 1);
 
   for (int row = 0; row < mat.rows(); row++)
-    for (int col = 0; col < mat.cols(); col++)
-      mat(row, col) = matrix_B_element<num_points>(
+    for (int col = std::max(row - int(order), 0);
+         col <= std::min(row + order, mat.cols() - 1); col++)
+      mat.insert(row, col) = matrix_B_element<num_points>(
           row - order + 1, col - order + 1, knots, order);
 
   return mat;
 }
 
 template <int num_points>
-MatrixXd matrix_H(std::vector<double>& knots, Index order, int l, int z) {
+SparseMatrix<double> matrix_H(std::vector<double>& knots, Index order, int l,
+                              int z) {
   Index n = knots.size();
-  MatrixXd mat(n - 3 + order, n - 3 + order);
+  SparseMatrix<double> mat(n - 3 + order, n - 3 + order);
+  mat.reserve((n - 3 + order) * 2 * order + 1);
 
   for (int row = 0; row < mat.rows(); row++)
-    for (int col = 0; col < mat.cols(); col++)
-      mat(row, col) = matrix_H_element<num_points>(
+    for (int col = std::max(row - int(order), 0);
+         col <= std::min(row + order, mat.cols() - 1); col++)
+      mat.insert(row, col) = matrix_H_element<num_points>(
           row - order + 1, col - order + 1, knots, order, l, z);
 
   return mat;
@@ -130,8 +137,23 @@ void solve(std::vector<double>& knots, std::string& basefilename,
     cout << "H=\n" << H << endl;
   }
 
-  GeneralizedEigenSolver<MatrixXd> ges;
-  ges.compute(H, B);
+  // Construct matrix operation objects using the wrapper classes
+  Spectra::SparseSymMatProd<double> op(H);
+  Spectra::SparseCholesky<double> Bop(B);
+
+  // Construct generalized eigen solver object, requesting the largest three
+  // generalized eigenvalues
+  Spectra::SymGEigsSolver<Spectra::SparseSymMatProd<double>,
+                          Spectra::SparseCholesky<double>,
+                          Spectra::GEigsMode::Cholesky>
+      ges(op, Bop, H.cols() - 1, H.cols());
+
+  // Initialize and compute
+  ges.init();
+  int nconv = ges.compute(Spectra::SortRule::SmallestAlge);
+
+  // GeneralizedEigenSolver<MatrixXd> ges;
+  // ges.compute(H, B);
   VectorXcd eigenvalues = ges.eigenvalues();
   VectorXd real_eigen = eigenvalues.real();
 
