@@ -1,7 +1,7 @@
 - name: test
   l: 0
   Z: 1
-  plot: false
+  plot_xmax: false
   knots: 
     type: linear # exponential
     expfac: 10 # only needs to be defined if type==exponential
@@ -12,7 +12,7 @@
 - name: test_exp
   l: 0
   Z: 1
-  plot: false
+  plot_xmax: false
   knots: 
     type: exponential # exponential
     expfac: 10 # only needs to be defined if type==exponential
@@ -23,7 +23,7 @@
 - name: test_jan
   l: 0
   Z: 1
-  plot: false
+  plot_xmax: false
   knots: 
     type: linear # exponential
     expfac: 10 # only needs to be defined if type==exponential
@@ -34,7 +34,81 @@
 - name: good
   l: 0
   Z: 1
-  plot: true
+  plot_xmax: 1
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 1000
+
+- name: good_wideplot
+  l: 0
+  Z: 1
+  plot_xmax: 100
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 1000
+
+- name: good_wideplot_l1
+  l: 1
+  Z: 1
+  plot_xmax: 100
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 1000
+
+- name: good_wideplot_l2
+  l: 2
+  Z: 1
+  plot_xmax: 100
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 1000
+
+- name: good_wideplot_l6
+  l: 6
+  Z: 1
+  plot_xmax: 100
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 1000
+
+- name: good_l0
+  l: 0
+  Z: 1
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 1000
+
+- name: good_l1
+  l: 1
+  Z: 1
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 1000
+
+- name: good_l2
+  l: 2
+  Z: 1
   knots: 
     type: exponential # exponential
     expfac: 10 # only needs to be defined if type==exponential

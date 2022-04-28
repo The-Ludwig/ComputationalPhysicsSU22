@@ -5,6 +5,8 @@
 #include <Eigen/Eigenvalues>
 #include <boost/math/quadrature/gauss.hpp>
 #include <iostream>
+#include <numeric>
+#include <optional>
 #include <vector>
 
 #include "NumpySaver.hpp"
@@ -111,8 +113,8 @@ double evaluate_spline(const double& x, const std::vector<double>& knots,
 }
 
 template <int order>
-void solve(std::vector<double>& knots, std::string& basefilename, bool plot,
-           int l, int z) {
+void solve(std::vector<double>& knots, std::string& basefilename,
+           std::optional<double> plot_max, int l, int z) {
   constexpr int gauss_points = order * 1.5;
   int n_knots = knots.size();
 
@@ -133,7 +135,13 @@ void solve(std::vector<double>& knots, std::string& basefilename, bool plot,
   VectorXcd eigenvalues = ges.eigenvalues();
   VectorXd real_eigen = eigenvalues.real();
 
-  // sort the eigenvalues
+  // sort the eigenvalues (and create an index list)
+  std::vector<int> indices(real_eigen.size());
+  std::iota(indices.begin(), indices.end(), 0);
+
+  std::sort(indices.begin(), indices.end(), [&](int A, int B) -> bool {
+    return real_eigen[A] < real_eigen[B];
+  });
   std::sort(real_eigen.data(), real_eigen.data() + real_eigen.size());
 
   if (eigenvalues.imag().cwiseAbs().sum() > 10e-10) {
@@ -151,15 +159,15 @@ void solve(std::vector<double>& knots, std::string& basefilename, bool plot,
   NumpySaver eigvec_saver(
       fmt::format("build/output/{}_eigenvectors.npy", basefilename));
   for (int col = 0; col < eigenvectors.cols(); col++)
-    eigvec_saver << eigenvectors.col(col);
+    eigvec_saver << eigenvectors.col(indices[col]);
 
-  if (plot) {
-    ArrayXd x = ArrayXd::LinSpaced(1000, 0, 10);
+  if (auto xmax = plot_max) {
+    ArrayXd x = ArrayXd::LinSpaced(1000, 0, *xmax);
     MatrixXd points(x.size(), eigenvectors.cols());
     for (int row = 0; row < x.size(); row++)
       for (int col = 0; col < points.cols(); col++)
-        points(row, col) =
-            evaluate_spline(x[row], knots, eigenvectors.col(col), order);
+        points(row, col) = evaluate_spline(
+            x[row], knots, eigenvectors.col(indices[col]), order);
 
     NumpySaver plot_saver(
         fmt::format("build/output/{}_plot_points.npy", basefilename));
@@ -170,7 +178,8 @@ void solve(std::vector<double>& knots, std::string& basefilename, bool plot,
 
 template <int order>
 void solve_exp(int n_knots, double rmin, double rmax, double exp_fak,
-               std::string& basefilename, bool plot, int l, int z) {
+               std::string& basefilename, std::optional<double> plot, int l,
+               int z) {
   std::vector<double> knots(n_knots);
   for (int i = 0; i < n_knots; i++)
     knots[i] = (rmax - rmin) *
@@ -183,7 +192,7 @@ void solve_exp(int n_knots, double rmin, double rmax, double exp_fak,
 
 template <int order>
 void solve_lin(int n_knots, double rmin, double rmax, std::string& basefilename,
-               bool plot, int l, int z) {
+               std::optional<double> plot, int l, int z) {
   std::vector<double> knots(n_knots);
   for (int i = 0; i < n_knots; i++)
     knots[i] = double(i) / double(n_knots - 1) * (rmax - rmin) + rmin;
@@ -198,7 +207,19 @@ int main() {
 
   for (std::size_t i = 0; i < configs.size(); i++) {
     YAML::Node config = configs[i];
-    auto plot = config["plot"].as<bool>();
+
+    std::optional<double> plot;
+
+    if (auto p_node = config["plot_xmax"]) {
+      try {
+        auto val = p_node.as<double>();
+        if (val > 0) plot.emplace(val);
+      } catch (const YAML::TypedBadConversion<double>&) {
+        auto boolval = p_node.as<bool>();
+        if (boolval) plot.emplace(10);
+      }
+    }
+
     auto l = config["l"].as<int>();
     auto z = config["Z"].as<int>();
     auto basefilename = config["name"].as<std::string>();
@@ -210,7 +231,7 @@ int main() {
     auto type = knot_node.Type();
     // single value
     if (type == YAML::NodeType::Sequence) {
-      auto knots = knot_node.as<std::vector<double> >();
+      auto knots = knot_node.as<std::vector<double>>();
       solve<order>(knots, basefilename, plot, l, z);
     } else if (type == YAML::NodeType::Map) {
       auto rmin = knot_node["rmin"].as<double>();
