@@ -42,6 +42,17 @@
     rmin: 0
     rmax: 1000
 
+- name: good_linear
+  l: 0
+  Z: 1
+  plot_xmax: 1
+  knots: 
+    type: linear # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 1000
+
 - name: good_wideplot
   l: 0
   Z: 1
@@ -115,3 +126,113 @@
     N: 30
     rmin: 0
     rmax: 1000
+
+- name: rmax_5
+  l: 0
+  Z: 1
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 5
+
+- name: rmax_10
+  l: 0
+  Z: 1
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 10
+
+- name: rmax_20
+  l: 0
+  Z: 1
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 20
+
+- name: rmax_40
+  l: 0
+  Z: 1
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 40
+
+- name: rmax_80
+  l: 0
+  Z: 1
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 80
+    
+- name: rmax_160
+  l: 0
+  Z: 1
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 160
+
+- name: rmax_500
+  l: 0
+  Z: 1
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 500
+
+- name: rmax_1000
+  l: 0
+  Z: 1
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 1000
+
+- name: rmax_5000
+  l: 0
+  Z: 1
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 5000
+
+- name: rmax_10000
+  l: 0
+  Z: 1
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 10000
+
+- name: z
+  l: 0
+  Z: 2
+  knots: 
+    type: exponential # exponential
+    expfac: 10 # only needs to be defined if type==exponential
+    N: 30
+    rmin: 0
+    rmax: 10000

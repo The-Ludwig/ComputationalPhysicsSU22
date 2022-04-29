@@ -1,5 +1,5 @@
 EXECUTABLE=$(shell pwd |  sed -e 's/.*\///' -e 's/\(.*\)/\L\1/' -e 's/project[0-9][0-9]-//')
-PLOTS=good_plot.pdf
+PLOTS=eigvalues.pdf
 OUTPUT=test_eigenvalues.npy
 
 # 'Debug' or 'Release'

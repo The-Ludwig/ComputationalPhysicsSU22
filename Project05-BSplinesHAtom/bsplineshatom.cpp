@@ -149,6 +149,11 @@ void solve(std::vector<double>& knots, std::string& basefilename,
       ges(op, Bop, H.cols() - 1, H.cols());
 
   // Initialize and compute
+  // test init vector
+  std::vector<double> init(H.cols(), 1);
+  // init[0] = 30;
+  // init[1] = -10;
+
   ges.init();
   int nconv = ges.compute(Spectra::SortRule::SmallestAlge);
 
@@ -275,4 +280,13 @@ int main() {
           "'type', 'N', 'rmin' and 'rmax'.");
     }
   }
+
+  std::string bfn = "k7";
+  solve_exp<6>(30, 0, 1000, 10, bfn, {}, 0, 1);
+
+  std::string bfn_1 = "few_knots_6";
+  solve_exp<20>(5, 0, 1000, 10, bfn_1, {}, 0, 1);
+
+  std::string bfn_2 = "few_knots_3";
+  solve_exp<3>(5, 0, 1000, 10, bfn_2, {}, 0, 1);
 }
