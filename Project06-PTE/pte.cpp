@@ -187,20 +187,21 @@ VectorXd evaluate_spline_poisson(const VectorXd& x,
 
 // int, int, int = N, n, l
 template <int order>
-void solve(std::vector<double>& knots_atom, std::vector<double>& knots_poisson,
-           std::vector<std::tuple<int, int, int>>& orbitals, int Z,
-           double tol = 1e-6) {
+double solve(std::vector<double>& knots_atom,
+             std::vector<double>& knots_poisson,
+             std::vector<std::tuple<int, int, int>>& orbitals, int z,
+             double mixture = 0.4, double tol = 1e-6) {
   using namespace std;
   constexpr int gauss_points = double(order) * 1.5;
 
   size_t n_orbitals = orbitals.size();
 
-  auto matrix_poisson = build_matrix(knots_poisson);
+  auto matrix_poisson_ = matrix_poisson(knots_poisson);
   // first do the (sparse) LU decomposition
   Eigen::SparseLU<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int>>
       solver_poisson;
-  solver.analyzePattern(matrix_poisson);
-  solver.factorize(matrix_poisson);
+  solver_poisson.analyzePattern(matrix_poisson_);
+  solver_poisson.factorize(matrix_poisson_);
 
   auto B = matrix_B<gauss_points>(knots_atom, order);
 
@@ -209,19 +210,65 @@ void solve(std::vector<double>& knots_atom, std::vector<double>& knots_poisson,
   VectorXd old_orbital_energies = VectorXd::Zero(n_orbitals);
   VectorXd orbital_energies = VectorXd::Ones(n_orbitals);
 
-  while ((old_orbital_energies - orbital_energies).norm() > tol) {
-    std::map<int, MatrixXd> l_map;
+  VectorXd weights_poisson = VectorXd::Zero(matrix_poisson_.cols() + 1);
+  VectorXd weights_poisson_old = VectorXd::Zero(matrix_poisson_.cols() + 1);
 
-    for (size_t i = 0; i < n_orbitals; i++) {
-      auto [N, n, l] = orbitals[i];
+  std::map<int, MatrixXd> l_map, l_map_old;
+
+  std::function rho = [&](double r) {
+    double sum = 0;
+    for (auto& [N, n, l] : orbitals) {
+      if (!l_map.contains(l)) continue;
+      double pnl_r = evaluate_spline(r, knots_atom, l_map[l].row(n - l), order);
+      sum += N * pnl_r * pnl_r;
+    }
+    return sum;
+  };
+
+  std::function rho_old = [&](double r) {
+    double sum = 0;
+    for (auto& [N, n, l] : orbitals) {
+      if (!l_map_old.contains(l)) continue;
+      double pnl_r =
+          evaluate_spline(r, knots_atom, l_map_old[l].row(n - l), order);
+      sum += N * pnl_r * pnl_r;
+    }
+    return sum;
+  };
+
+  std::function<double(double)> additional = [&](double r) {
+    double old_exchange = -3. * pow(rho_old(r) / 8. / M_PI, 1. / 3.);
+    double new_exchange = -3. * pow(3. * rho(r) / 8. / M_PI, 1. / 3.);
+    double old_direct =
+        evaluate_spline_poisson(r, knots_poisson, weights_poisson_old, order) /
+        r;
+    double new_direct =
+        evaluate_spline_poisson(r, knots_poisson, weights_poisson, order) / r;
+
+    return (1. - mixture) * (new_direct + new_exchange) +
+           mixture * (old_direct + old_exchange);
+  };
+
+  double energy = numeric_limits<double>::max();
+
+  unsigned int iter = 0;
+
+  while ((old_orbital_energies - orbital_energies).norm() > tol) {
+    iter++;
+    cout << iter << endl;
+    old_orbital_energies = orbital_energies;
+    l_map_old = l_map;
+    l_map = std::map<int, MatrixXd>();
+
+    for (int i = 0; i < n_orbitals; i++) {
+      auto& [N, n, l] = orbitals[i];
 
       if (!l_map.contains(l)) {
-        auto H = matrix_H<gauss_points>(knots, order, l, z);
+        auto H = matrix_H<gauss_points>(knots_atom, order, l, z, additional);
 
         ges.compute(H, B);
         VectorXcd eigenvalues = ges.eigenvalues();
 
-        auto H = matrix_H<gauss_points>(knots, order, l, z);
         if (eigenvalues.imag().cwiseAbs().sum() > 10e-10) {
           cerr << "Error: Complex eigenvalues!" << endl;
         }
@@ -243,32 +290,32 @@ void solve(std::vector<double>& knots_atom, std::vector<double>& knots_poisson,
         l_map[l] = MatrixXd(unsorted_eigenvectors.rows(),
                             unsorted_eigenvectors.cols());
 
-        for (Index row = 0; row < unsorted_eigenvector.rows(); row++) {
-          l_map[l].row(row) = unsorted_eigenvectors[indices[row]];
+        for (Index row = 0; row < unsorted_eigenvectors.rows(); row++) {
+          for (Index col = 0; col < unsorted_eigenvectors.cols(); col++) {
+            l_map[l](row, col) = unsorted_eigenvectors(indices[row], col);
+          }
         }
 
-        if (real_eigen[n] >= 0) {
-          throw std::runtime_error("Eigenvalue is not smaller than 0!");
-        }
+        // if (real_eigen[n - l] >= 0) {
+        //   throw std::runtime_error("Eigenvalue is not smaller than 0!");
+        // }
+        cout << "Eigenvalues: " << real_eigen.transpose() << endl;
+
+        orbital_energies[i] = real_eigen[n - l];
       }
     }
 
-    std::function rho = [&](double r) {
-      double sum = 0;
-      for (auto& [N, n, l] : orbitals) {
-        double pnl_r = evaluate_spline(r, knots_atom, l_map[l].row(n), order);
-        sum += N * pnl_r * pnl_r;
-      }
-      return sum;
-    };
-    auto rhs = build_rhs(knots_poisson, rho);
-    auto solution_poisson = solver.solve(rhs);
+    auto rhs = rhs_poisson(knots_poisson, rho);
 
-    VectorXd weights_poisson(solution_poisson.size() + 1);
-    weights_poisson << 0, solution_poisson;
+    weights_poisson_old = weights_poisson;
+    weights_poisson << 0, solver_poisson.solve(rhs);
 
-    VectorXd v_ee = evaluate_spline_poisson(x, knots, weights);
+    energy = 0;
+    for (int i = 0; i < n_orbitals; i++) {
+      energy += orbital_energies[i];
+    }
   }
+  return energy;
 }
 
 template <int order>
@@ -360,56 +407,78 @@ void solve_lin(int n_knots, double rmin, double rmax, std::string& basefilename,
 }
 
 int main() {
-  YAML::Node configs = YAML::LoadFile("config.yaml");
+  int n_knots = 30;
 
-  constexpr int order = 3;
+  std::vector<double> knots_atom(n_knots);
+  std::vector<double> knots_poisson(n_knots);
 
-  for (std::size_t i = 0; i < configs.size(); i++) {
-    YAML::Node config = configs[i];
+  for (int i = 0; i < n_knots; i++)
+    knots_atom[i] = (10000 - 0) *
+                        (std::exp(double(i) / double(n_knots - 1) * 10) - 1.) /
+                        (std::exp(10) - 1) +
+                    0;
+  for (int i = 0; i < n_knots; i++)
+    knots_poisson[i] =
+        (10000 - 0) * (std::exp(double(i) / double(n_knots - 1) * 10) - 1.) /
+            (std::exp(10) - 1) +
+        0;
 
-    std::optional<double> plot;
+  std::vector<std::tuple<int, int, int>> orbitals = {{2, 1, 0}};  // N, n, l
 
-    if (auto p_node = config["plot_xmax"]) {
-      try {
-        auto val = p_node.as<double>();
-        if (val > 0) plot.emplace(val);
-      } catch (const YAML::TypedBadConversion<double>&) {
-        auto boolval = p_node.as<bool>();
-        if (boolval) plot.emplace(10);
-      }
-    }
+  double energy = solve<3>(knots_atom, knots_poisson, orbitals, 2, 0);
 
-    auto l = config["l"].as<int>();
-    auto z = config["Z"].as<int>();
-    auto basefilename = config["name"].as<std::string>();
+  cout << energy;
 
-    fmt::print("\n\n{0}\n# Simulation '{1}' {2}/{3}\n{0}\n", devider,
-               basefilename, i + 1, configs.size());
+  // YAML::Node configs = YAML::LoadFile("config.yaml");
 
-    YAML::Node knot_node = config["knots"];
-    auto type = knot_node.Type();
-    // single value
-    if (type == YAML::NodeType::Sequence) {
-      auto knots = knot_node.as<std::vector<double>>();
-      solve<order>(knots, basefilename, plot, l, z);
-    } else if (type == YAML::NodeType::Map) {
-      auto rmin = knot_node["rmin"].as<double>();
-      auto rmax = knot_node["rmax"].as<double>();
-      auto N = knot_node["N"].as<size_t>();
-      auto type = knot_node["type"].as<std::string>();
-      if (type == "linear") {
-        solve_lin<order>(N, rmin, rmax, basefilename, plot, l, z);
-      } else if (type == "exponential") {
-        auto expfac = knot_node["expfac"].as<double>();
-        solve_exp<order>(N, rmin, rmax, expfac, basefilename, plot, l, z);
-      } else {
-        throw std::runtime_error(
-            "'type' of knots must either be 'linear' or 'exponential'.");
-      }
-    } else {
-      throw std::runtime_error(
-          "Range node must either be list, scalar or a map defining "
-          "'type', 'N', 'rmin' and 'rmax'.");
-    }
-  }
+  // constexpr int order = 3;
+
+  // for (std::size_t i = 0; i < configs.size(); i++) {
+  //   YAML::Node config = configs[i];
+
+  //   std::optional<double> plot;
+
+  //   if (auto p_node = config["plot_xmax"]) {
+  //     try {
+  //       auto val = p_node.as<double>();
+  //       if (val > 0) plot.emplace(val);
+  //     } catch (const YAML::TypedBadConversion<double>&) {
+  //       auto boolval = p_node.as<bool>();
+  //       if (boolval) plot.emplace(10);
+  //     }
+  //   }
+
+  //   auto l = config["l"].as<int>();
+  //   auto z = config["Z"].as<int>();
+  //   auto basefilename = config["name"].as<std::string>();
+
+  //   fmt::print("\n\n{0}\n# Simulation '{1}' {2}/{3}\n{0}\n", devider,
+  //              basefilename, i + 1, configs.size());
+
+  //   YAML::Node knot_node = config["knots"];
+  //   auto type = knot_node.Type();
+  //   // single value
+  //   if (type == YAML::NodeType::Sequence) {
+  //     auto knots = knot_node.as<std::vector<double>>();
+  //     solve<order>(knots, basefilename, plot, l, z);
+  //   } else if (type == YAML::NodeType::Map) {
+  //     auto rmin = knot_node["rmin"].as<double>();
+  //     auto rmax = knot_node["rmax"].as<double>();
+  //     auto N = knot_node["N"].as<size_t>();
+  //     auto type = knot_node["type"].as<std::string>();
+  //     if (type == "linear") {
+  //       solve_lin<order>(N, rmin, rmax, basefilename, plot, l, z);
+  //     } else if (type == "exponential") {
+  //       auto expfac = knot_node["expfac"].as<double>();
+  //       solve_exp<order>(N, rmin, rmax, expfac, basefilename, plot, l, z);
+  //     } else {
+  //       throw std::runtime_error(
+  //           "'type' of knots must either be 'linear' or 'exponential'.");
+  //     }
+  //   } else {
+  //     throw std::runtime_error(
+  //         "Range node must either be list, scalar or a map defining "
+  //         "'type', 'N', 'rmin' and 'rmax'.");
+  //   }
+  // }
 }
