@@ -173,6 +173,36 @@ double evaluate_spline_poisson(const double& x,
   return sum;
 }
 
+double test_norm_r2(std::function<double(double)> f, double xmin, double xmax) {
+  using boost::math::quadrature::gauss;
+
+  std::function<double(double)> integrant = [&](double x) {
+    return f(x) * x * x;
+  };
+
+  double norm =
+      4 * M_PI * gauss<double, 10000>::integrate(integrant, xmin, xmax);
+
+  std::cout << "Norm is " << norm << endl;
+
+  return norm;
+}
+
+double test_norm_sqrt(std::function<double(double)> f, double xmin,
+                      double xmax) {
+  using boost::math::quadrature::gauss;
+  std::function<double(double)> integrant = [&](double x) {
+    double c = f(x);
+    return c * c;
+  };
+
+  double norm = gauss<double, 10000>::integrate(integrant, xmin, xmax);
+
+  std::cout << "WVF Norm is " << norm << endl;
+
+  return norm;
+}
+
 VectorXd evaluate_spline_poisson(const VectorXd& x,
                                  const std::vector<double>& knots,
                                  const VectorXd& weights,
@@ -183,6 +213,30 @@ VectorXd evaluate_spline_poisson(const VectorXd& x,
     ret[i] = evaluate_spline(x[i], knots, weights, order);
   }
   return ret;
+}
+
+template <int order>
+std::vector<double> normalization_constants_radial_wavefunctions(
+    std::vector<double>& knots, MatrixXd& eigenvectors) {
+  using boost::math::quadrature::gauss;
+
+  std::vector<double> returner;
+  returner.reserve(eigenvectors.cols());
+
+  int col;
+  std::function<double(double)> f = [&](double r) {
+    double v = evaluate_spline(r, knots, eigenvectors.col(col), order);
+    return v * v;
+  };
+
+  for (col = 0; col < eigenvectors.cols(); col++) {
+    double norm = 0;
+    for (std::size_t k = 0; k < knots.size() - 1; k++)
+      norm += gauss<double, 2 * order>::integrate(f, knots[k], knots[k + 1]);
+    returner.push_back(std::sqrt(norm));
+  }
+
+  return returner;
 }
 
 // int, int, int = N, n, l
@@ -213,37 +267,46 @@ double solve(std::vector<double>& knots_atom,
   VectorXd weights_poisson = VectorXd::Zero(matrix_poisson_.cols() + 1);
   VectorXd weights_poisson_old = VectorXd::Zero(matrix_poisson_.cols() + 1);
 
-  std::map<int, MatrixXd> l_map, l_map_old;
+  std::map<int, std::pair<MatrixXd, VectorXd>> l_map, l_map_old;
 
-  std::function rho = [&](double r) {
+  std::function rho = [&](double r) -> double {
+    if (r == 0) return 0;
     double sum = 0;
     for (auto& [N, n, l] : orbitals) {
       if (!l_map.contains(l)) continue;
-      double pnl_r = evaluate_spline(r, knots_atom, l_map[l].row(n - l), order);
+      double pnl_r =
+          evaluate_spline(r, knots_atom, l_map[l].first.col(n - l - 1), order) /
+          r;
       sum += N * pnl_r * pnl_r;
     }
-    return sum;
+    return sum / 4. / M_PI;
   };
 
-  std::function rho_old = [&](double r) {
+  std::function rho_old = [&](double r) -> double {
+    if (r == 0) return 0;
     double sum = 0;
     for (auto& [N, n, l] : orbitals) {
       if (!l_map_old.contains(l)) continue;
-      double pnl_r =
-          evaluate_spline(r, knots_atom, l_map_old[l].row(n - l), order);
+      double pnl_r = evaluate_spline(r, knots_atom,
+                                     l_map_old[l].first.col(n - l - 1), order) /
+                     r;
       sum += N * pnl_r * pnl_r;
     }
-    return sum;
+    return sum / 4. / M_PI;
   };
 
-  std::function<double(double)> additional = [&](double r) {
-    double old_exchange = -3. * pow(rho_old(r) / 8. / M_PI, 1. / 3.);
+  std::function<double(double)> additional = [&](double r) -> double {
+    if (r == 0.0) return 0;
+    double old_exchange = -3. * pow(3. * rho_old(r) / 8. / M_PI, 1. / 3.);
     double new_exchange = -3. * pow(3. * rho(r) / 8. / M_PI, 1. / 3.);
+    // double old_exchange = 0, new_exchange = 0;
     double old_direct =
         evaluate_spline_poisson(r, knots_poisson, weights_poisson_old, order) /
         r;
     double new_direct =
         evaluate_spline_poisson(r, knots_poisson, weights_poisson, order) / r;
+
+    // double old_direct = 0, new_direct = 0;
 
     return (1. - mixture) * (new_direct + new_exchange) +
            mixture * (old_direct + old_exchange);
@@ -257,13 +320,13 @@ double solve(std::vector<double>& knots_atom,
     iter++;
     cout << iter << endl;
     old_orbital_energies = orbital_energies;
-    l_map_old = l_map;
-    l_map = std::map<int, MatrixXd>();
 
-    for (int i = 0; i < n_orbitals; i++) {
+    std::map<int, std::pair<MatrixXd, VectorXd>> l_map_new;
+
+    for (size_t i = 0; i < n_orbitals; i++) {
       auto& [N, n, l] = orbitals[i];
 
-      if (!l_map.contains(l)) {
+      if (!l_map_new.contains(l)) {
         auto H = matrix_H<gauss_points>(knots_atom, order, l, z, additional);
 
         ges.compute(H, B);
@@ -287,33 +350,65 @@ double solve(std::vector<double>& knots_atom,
         std::sort(real_eigen.data(), real_eigen.data() + real_eigen.size());
 
         MatrixXd unsorted_eigenvectors = ges.eigenvectors().real();
-        l_map[l] = MatrixXd(unsorted_eigenvectors.rows(),
-                            unsorted_eigenvectors.cols());
+        l_map_new[l] = std::pair(MatrixXd(unsorted_eigenvectors.rows(),
+                                          unsorted_eigenvectors.cols()),
+                                 real_eigen);
 
-        for (Index row = 0; row < unsorted_eigenvectors.rows(); row++) {
-          for (Index col = 0; col < unsorted_eigenvectors.cols(); col++) {
-            l_map[l](row, col) = unsorted_eigenvectors(indices[row], col);
-          }
-        }
+        auto normalization_constants =
+            normalization_constants_radial_wavefunctions<order>(
+                knots_atom, unsorted_eigenvectors);
+
+        for (Index row = 0; row < unsorted_eigenvectors.rows(); row++)
+          for (Index col = 0; col < unsorted_eigenvectors.cols(); col++)
+            l_map_new[l].first(row, col) =
+                unsorted_eigenvectors(row, indices[col]) /
+                normalization_constants[indices[col]];
 
         // if (real_eigen[n - l] >= 0) {
         //   throw std::runtime_error("Eigenvalue is not smaller than 0!");
         // }
-        cout << "Eigenvalues: " << real_eigen.transpose() << endl;
+        // cout << "Eigenvalues: " << real_eigen.transpose() << endl;
 
-        orbital_energies[i] = real_eigen[n - l];
+        auto test = normalization_constants_radial_wavefunctions<order>(
+            knots_atom, l_map_new[l].first);
+        cout << "indizes = ";
+        for (auto& x : indices) cout << x << ", ";
+        cout << endl;
+
+        // std::function<double(double)> radial_wvf = [&](double x) {
+        //   return evaluate_spline(x, knots_atom, l_map_new[l].col(n - l - 1),
+        //                          order);
+        // };
+
+        // test_norm_sqrt(radial_wvf, 0, 100);
       }
+      orbital_energies[i] = l_map_new[l].second[n - l - 1];
     }
+
+    // cout << "L_map_new " << l_map_new[0] << endl;
+    // if (l_map.contains(0)) cout << "L_map " << l_map[0] << endl;
+    // if (l_map_old.contains(0)) cout << "L_map_old " << l_map_old[0] << endl;
+
+    l_map_old = l_map;
+    l_map = l_map_new;
+
+    // test_norm_r2(rho, 0, 50);
 
     auto rhs = rhs_poisson(knots_poisson, rho);
 
     weights_poisson_old = weights_poisson;
     weights_poisson << 0, solver_poisson.solve(rhs);
+    // cout << "Weights possion = " << weights_poisson.transpose() << endl;
+    // cout << "Weights possion old= " << weights_poisson_old.transpose() <<
+    // endl;
 
     energy = 0;
-    for (int i = 0; i < n_orbitals; i++) {
-      energy += orbital_energies[i];
-    }
+    for (size_t i = 0; i < n_orbitals; i++) energy += orbital_energies[i];
+
+    cout << "Old orbital energies=" << old_orbital_energies.transpose() << endl;
+    cout << "Orbital energies=" << orbital_energies.transpose() << endl;
+
+    cout << endl;
   }
   return energy;
 }
@@ -408,24 +503,37 @@ void solve_lin(int n_knots, double rmin, double rmax, std::string& basefilename,
 
 int main() {
   int n_knots = 30;
+  int n_knots_p = 1000;
 
   std::vector<double> knots_atom(n_knots);
-  std::vector<double> knots_poisson(n_knots);
+  std::vector<double> knots_poisson(n_knots_p);
 
   for (int i = 0; i < n_knots; i++)
-    knots_atom[i] = (10000 - 0) *
-                        (std::exp(double(i) / double(n_knots - 1) * 10) - 1.) /
-                        (std::exp(10) - 1) +
-                    0;
-  for (int i = 0; i < n_knots; i++)
+    knots_atom[i] = (1000. - 0.) *
+                        (std::exp(double(i) / double(n_knots - 1) * 10.) - 1.) /
+                        (std::exp(10.) - 1.) +
+                    0.;
+  for (int i = 0; i < n_knots_p; i++)
     knots_poisson[i] =
-        (10000 - 0) * (std::exp(double(i) / double(n_knots - 1) * 10) - 1.) /
-            (std::exp(10) - 1) +
-        0;
+        (1000. - 0.) *
+            (std::exp(double(i) / double(n_knots_p - 1) * 10.) - 1.) /
+            (std::exp(10.) - 1.) +
+        0.;
 
-  std::vector<std::tuple<int, int, int>> orbitals = {{2, 1, 0}};  // N, n, l
+  cout << "Knots Atom: ";
+  for (auto knot : knots_atom) cout << knot << ", ";
+  cout << endl;
 
-  double energy = solve<3>(knots_atom, knots_poisson, orbitals, 2, 0);
+  cout << "Knots Poisson: ";
+  for (auto knot : knots_poisson) cout << knot << ", ";
+  cout << endl;
+
+  std::vector<std::tuple<int, int, int>> orbitals_He = {{2, 2, 0}};  // N, n, l
+
+  std::vector<std::tuple<int, int, int>> orbitals_Ne = {
+      {2, 1, 0}, {2, 2, 0}, {6, 2, 1}};  // N, n, l
+
+  double energy = solve<3>(knots_atom, knots_poisson, orbitals_Ne, 10, .4);
 
   cout << energy;
 
