@@ -3,7 +3,7 @@ PLOTS=good_plot.pdf
 OUTPUT=test_eigenvalues.npy
 
 # 'Debug' or 'Release'
-BUILD_TYPE=Debug
+BUILD_TYPE=Release
 
 GCC_PATH=$(shell which g++)
 
@@ -19,6 +19,9 @@ $(info g++=$(GCC_PATH))
 
 all: build/exercise.zip
 
+build/output/pse.yaml: create_pse.py | build 
+	python create_pse.py
+
 build/exercise.zip: build/report.pdf | build
 	cp build/report.pdf report.pdf
 	zip -r build/exercise . --exclude build/\*
@@ -30,7 +33,7 @@ build/report.pdf: report.md $(PLOT_PATHS) | build
 $(PLOT_PATHS)&: visualize.py $(OUTPUT_PATHS) | build
 	python visualize.py
 
-$(OUTPUT_PATHS)&: build/$(EXECUTABLE) config.yaml | build
+$(OUTPUT_PATHS)&: build/$(EXECUTABLE) config.yaml build/output/pse.yaml | build
 	build/$(EXECUTABLE)
 
 build/$(EXECUTABLE): build/Makefile $(EXECUTABLE).cpp | build 

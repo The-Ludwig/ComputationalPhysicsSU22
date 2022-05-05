@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "NumpySaver.hpp"
+#include "Timer.hpp"
 #include "bsplines.hpp"
 
 using namespace Eigen;
@@ -161,8 +162,7 @@ VectorXd rhs_poisson(const std::vector<double>& knots,
 double evaluate_spline_poisson(const double& x,
                                const std::vector<double>& knots,
                                const VectorXd& weights, std::size_t order = 3) {
-  auto n = knots.size();
-  assert(int(n + order) - 1 == weights.size());
+  assert(int(knots.size() + order) - 1 == weights.size());
 
   auto [values, index] = bsplines::bsplines(x, knots, order);
 
@@ -241,11 +241,14 @@ std::vector<double> normalization_constants_radial_wavefunctions(
 
 // int, int, int = N, n, l
 template <int order>
-double solve(std::vector<double>& knots_atom,
-             std::vector<double>& knots_poisson,
-             std::vector<std::tuple<int, int, int>>& orbitals, int z,
-             double mixture = 0.4, double tol = 1e-6) {
+std::tuple<double, std::size_t> solve(
+    std::vector<double>& knots_atom, std::vector<double>& knots_poisson,
+    std::vector<std::tuple<int, int, int>>& orbitals, int z,
+    std::string& basefilename, double mixture = 0.4, double tol = 1e-4,
+    std::size_t maxiter = 100) {
   using namespace std;
+  using boost::math::quadrature::gauss;
+
   constexpr int gauss_points = double(order) * 1.5;
 
   size_t n_orbitals = orbitals.size();
@@ -299,14 +302,11 @@ double solve(std::vector<double>& knots_atom,
     if (r == 0.0) return 0;
     double old_exchange = -3. * pow(3. * rho_old(r) / 8. / M_PI, 1. / 3.);
     double new_exchange = -3. * pow(3. * rho(r) / 8. / M_PI, 1. / 3.);
-    // double old_exchange = 0, new_exchange = 0;
     double old_direct =
         evaluate_spline_poisson(r, knots_poisson, weights_poisson_old, order) /
         r;
     double new_direct =
         evaluate_spline_poisson(r, knots_poisson, weights_poisson, order) / r;
-
-    // double old_direct = 0, new_direct = 0;
 
     return (1. - mixture) * (new_direct + new_exchange) +
            mixture * (old_direct + old_exchange);
@@ -314,11 +314,10 @@ double solve(std::vector<double>& knots_atom,
 
   double energy = numeric_limits<double>::max();
 
-  unsigned int iter = 0;
+  std::size_t iter = 0;
 
   while ((old_orbital_energies - orbital_energies).norm() > tol) {
     iter++;
-    cout << iter << endl;
     old_orbital_energies = orbital_energies;
 
     std::map<int, std::pair<MatrixXd, VectorXd>> l_map_new;
@@ -332,15 +331,16 @@ double solve(std::vector<double>& knots_atom,
         ges.compute(H, B);
         VectorXcd eigenvalues = ges.eigenvalues();
 
-        if (eigenvalues.imag().cwiseAbs().sum() > 10e-10) {
+#ifndef NDEBUG
+        if (eigenvalues.imag().cwiseAbs().sum() > 10e-3) {
           cerr << "Error: Complex eigenvalues!" << endl;
         }
+#endif
 
         VectorXd real_eigen = eigenvalues.real();
 
         // sort the eigenvalues (and create an index list)
         // https://stackoverflow.com/questions/39693909/sort-eigen-matrix-column-values-by-ascending-order-of-column-1-values
-
         std::vector<int> indices(real_eigen.size());
         std::iota(indices.begin(), indices.end(), 0);
         std::sort(indices.begin(), indices.end(), [&](int A, int B) -> bool {
@@ -364,117 +364,57 @@ double solve(std::vector<double>& knots_atom,
                 unsorted_eigenvectors(row, indices[col]) /
                 normalization_constants[indices[col]];
 
-        // if (real_eigen[n - l] >= 0) {
-        //   throw std::runtime_error("Eigenvalue is not smaller than 0!");
-        // }
-        // cout << "Eigenvalues: " << real_eigen.transpose() << endl;
-
         auto test = normalization_constants_radial_wavefunctions<order>(
             knots_atom, l_map_new[l].first);
-        cout << "indizes = ";
-        for (auto& x : indices) cout << x << ", ";
-        cout << endl;
-
-        // std::function<double(double)> radial_wvf = [&](double x) {
-        //   return evaluate_spline(x, knots_atom, l_map_new[l].col(n - l - 1),
-        //                          order);
-        // };
-
-        // test_norm_sqrt(radial_wvf, 0, 100);
       }
       orbital_energies[i] = l_map_new[l].second[n - l - 1];
     }
 
-    // cout << "L_map_new " << l_map_new[0] << endl;
-    // if (l_map.contains(0)) cout << "L_map " << l_map[0] << endl;
-    // if (l_map_old.contains(0)) cout << "L_map_old " << l_map_old[0] << endl;
-
     l_map_old = l_map;
     l_map = l_map_new;
-
-    // test_norm_r2(rho, 0, 50);
 
     auto rhs = rhs_poisson(knots_poisson, rho);
 
     weights_poisson_old = weights_poisson;
     weights_poisson << 0, solver_poisson.solve(rhs);
-    // cout << "Weights possion = " << weights_poisson.transpose() << endl;
-    // cout << "Weights possion old= " << weights_poisson_old.transpose() <<
-    // endl;
 
-    energy = 0;
-    for (size_t i = 0; i < n_orbitals; i++) energy += orbital_energies[i];
-
-    cout << "Old orbital energies=" << old_orbital_energies.transpose() << endl;
-    cout << "Orbital energies=" << orbital_energies.transpose() << endl;
-
-    cout << endl;
+    if (iter >= maxiter) {
+      cerr << "Reached maximum number of iterations!" << endl;
+      break;
+    }
   }
-  return energy;
-}
+  energy = 0;
 
-template <int order>
-void __solve__(std::vector<double>& knots, std::string& basefilename,
-               std::optional<double> plot_max, int l, int z) {
-  constexpr int gauss_points = double(order) * 1.5;
-  int n_knots = knots.size();
+  function<double(double, int, int)> ee_interaction = [&](double x, int n,
+                                                          int l) {
+    double pnl_r =
+        evaluate_spline(x, knots_atom, l_map[l].first.col(n - l - 1), order);
+    return additional(x) * pnl_r * pnl_r;
+  };
 
-  cout << "knots = ";
-  for (auto k : knots) cout << k << ", ";
-  cout << endl;
+  for (size_t i = 0; i < n_orbitals; i++) {
+    auto& [N, n, l] = orbitals[i];
+    function<double(double)> integrant =
+        bind(ee_interaction, std::placeholders::_1, n, l);
 
-  auto B = matrix_B<gauss_points>(knots, order);
-  auto H = matrix_H<gauss_points>(knots, order, l, z);
-
-  if (knots.size() < 20) {
-    cout << "B=\n" << B << "\n\n";
-    cout << "H=\n" << H << endl;
+    double integral = 0;
+    for (size_t k = 0; k < knots_poisson.size() - 1; k++) {
+      integral += gauss<double, 2 * order>::integrate(
+          integrant, knots_poisson[k], knots_poisson[k + 1]);
+    }
+    energy += N * (orbital_energies[i] - .5 * integral);
   }
+  cout << "Orbital energies=" << orbital_energies.transpose() << endl;
+  cout << "Total energy = " << energy << endl;
 
-  GeneralizedEigenSolver<MatrixXd> ges;
-  ges.compute(H, B);
-  VectorXcd eigenvalues = ges.eigenvalues();
-  VectorXd real_eigen = eigenvalues.real();
+  // exporting/plotting
+  VectorXd xx = VectorXd::LinSpaced(1000, 0, 100);
+  VectorXd rho_x = VectorXd(xx.size());
+  for (Index i = 0; i < xx.size(); i++) rho_x[i] = rho(xx[i]);
+  NumpySaver(fmt::format("build/output/{}_rho.npy", basefilename))
+      << xx << rho_x;
 
-  // sort the eigenvalues (and create an index list)
-  std::vector<int> indices(real_eigen.size());
-  std::iota(indices.begin(), indices.end(), 0);
-
-  std::sort(indices.begin(), indices.end(), [&](int A, int B) -> bool {
-    return real_eigen[A] < real_eigen[B];
-  });
-  std::sort(real_eigen.data(), real_eigen.data() + real_eigen.size());
-
-  if (eigenvalues.imag().cwiseAbs().sum() > 10e-10) {
-    cerr << "Error: Complex eigenvalues!" << endl;
-  }
-
-  cout << "Eigenvalues: " << real_eigen.transpose() << endl;
-
-  MatrixXd eigenvectors = ges.eigenvectors().real();
-
-  NumpySaver(fmt::format("build/output/{}_eigenvalues.npy", basefilename))
-      << real_eigen;
-  NumpySaver(fmt::format("build/output/{}_knots.npy", basefilename)) << knots;
-
-  NumpySaver eigvec_saver(
-      fmt::format("build/output/{}_eigenvectors.npy", basefilename));
-  for (int col = 0; col < eigenvectors.cols(); col++)
-    eigvec_saver << eigenvectors.col(indices[col]);
-
-  if (auto xmax = plot_max) {
-    ArrayXd x = ArrayXd::LinSpaced(1000, 0, *xmax);
-    MatrixXd points(x.size(), eigenvectors.cols());
-    for (int row = 0; row < x.size(); row++)
-      for (int col = 0; col < points.cols(); col++)
-        points(row, col) = evaluate_spline(
-            x[row], knots, eigenvectors.col(indices[col]), order);
-
-    NumpySaver plot_saver(
-        fmt::format("build/output/{}_plot_points.npy", basefilename));
-    plot_saver << x;
-    for (int col = 0; col < points.cols(); col++) plot_saver << points.col(col);
-  }
+  return {energy, iter};
 }
 
 template <int order>
@@ -501,6 +441,17 @@ void solve_lin(int n_knots, double rmin, double rmax, std::string& basefilename,
   solve<order>(knots, basefilename, plot, l, z);
 }
 
+std::vector<std::tuple<int, int, int>> to_tuples(
+    std::vector<std::vector<int>>& list) {
+  // how i wish map was a thing here...
+
+  std::vector<std::tuple<int, int, int>> orbitals;
+  orbitals.reserve(list.size());
+  for (auto& orbit : list)
+    orbitals.push_back(std::make_tuple(orbit[0], orbit[1], orbit[2]));
+  return orbitals;
+}
+
 int main() {
   int n_knots = 30;
   int n_knots_p = 1000;
@@ -520,73 +471,70 @@ int main() {
             (std::exp(10.) - 1.) +
         0.;
 
-  cout << "Knots Atom: ";
-  for (auto knot : knots_atom) cout << knot << ", ";
-  cout << endl;
+  Map<VectorXd> knots_map(knots_atom.data(), knots_atom.size());
+  Map<VectorXd> knots_map_p(knots_poisson.data(), knots_poisson.size());
+  NumpySaver("build/output/knots_poisson.npy") << knots_map_p;
+  NumpySaver("build/output/knots_atom.npy") << knots_map;
 
-  cout << "Knots Poisson: ";
-  for (auto knot : knots_poisson) cout << knot << ", ";
-  cout << endl;
+  // iterate through ALL the elements
+  YAML::Node elements = YAML::LoadFile("build/output/pse.yaml");
 
-  std::vector<std::tuple<int, int, int>> orbitals_He = {{2, 2, 0}};  // N, n, l
+  std::size_t num_elements = elements.size();
+
+  VectorXd zs(num_elements);
+  VectorXd es(num_elements);
+  VectorXd iterss(num_elements);
+  VectorXd es_ion(num_elements);
+  VectorXd iterss_ion(num_elements);
+
+  for (std::size_t i = 0; i < elements.size(); i++) {
+    YAML::Node element = elements[i];
+
+    auto z = element["Z"].as<int>();
+    auto name = element["name"].as<std::string>();
+    auto symbol = element["symbol"].as<std::string>();
+    auto orbitals_ = element["orbitals"].as<std::vector<std::vector<int>>>();
+    auto orbitals_ionized_ =
+        element["orbitals_ionized"].as<std::vector<std::vector<int>>>();
+
+    auto orbitals = to_tuples(orbitals_);
+    auto orbitals_ionized = to_tuples(orbitals_ionized_);
+
+    cout << "Element " << name << "(" << i + 1 << "/" << elements.size() << ")"
+         << endl;
+    zs[i] = z;
+
+    Timer t;
+    auto [energy, iter] =
+        solve<3>(knots_atom, knots_poisson, orbitals, z, symbol, .4);
+    cout << "E=" << energy << " took " << iter << " iterations ("
+         << t.elapsed_s() << "s)" << endl;
+
+    es[i] = energy;
+    iterss[i] = iter;
+
+    std::string symbol_ionized = symbol + "+";
+
+    t.reset();
+    auto [energy_ion, iter_ion] = solve<3>(
+        knots_atom, knots_poisson, orbitals_ionized, z, symbol_ionized, .4);
+    cout << "E_{ion}=" << energy_ion << " took " << iter_ion << " iterations ("
+         << t.elapsed_s() << "s)" << endl;
+
+    es_ion[i] = energy_ion;
+    iterss_ion[i] = iter_ion;
+    cout << endl;
+  }
+
+  NumpySaver("build/output/elements.npy")
+      << zs << es << iterss << es_ion << iterss_ion;
 
   std::vector<std::tuple<int, int, int>> orbitals_Ne = {
       {2, 1, 0}, {2, 2, 0}, {6, 2, 1}};  // N, n, l
+  std::vector<std::tuple<int, int, int>> orbitals_Nep = {
+      {2, 1, 0}, {2, 2, 0}, {5, 2, 1}};  // N, n, l
 
-  double energy = solve<3>(knots_atom, knots_poisson, orbitals_Ne, 10, .4);
-
-  cout << energy;
-
-  // YAML::Node configs = YAML::LoadFile("config.yaml");
-
-  // constexpr int order = 3;
-
-  // for (std::size_t i = 0; i < configs.size(); i++) {
-  //   YAML::Node config = configs[i];
-
-  //   std::optional<double> plot;
-
-  //   if (auto p_node = config["plot_xmax"]) {
-  //     try {
-  //       auto val = p_node.as<double>();
-  //       if (val > 0) plot.emplace(val);
-  //     } catch (const YAML::TypedBadConversion<double>&) {
-  //       auto boolval = p_node.as<bool>();
-  //       if (boolval) plot.emplace(10);
-  //     }
-  //   }
-
-  //   auto l = config["l"].as<int>();
-  //   auto z = config["Z"].as<int>();
-  //   auto basefilename = config["name"].as<std::string>();
-
-  //   fmt::print("\n\n{0}\n# Simulation '{1}' {2}/{3}\n{0}\n", devider,
-  //              basefilename, i + 1, configs.size());
-
-  //   YAML::Node knot_node = config["knots"];
-  //   auto type = knot_node.Type();
-  //   // single value
-  //   if (type == YAML::NodeType::Sequence) {
-  //     auto knots = knot_node.as<std::vector<double>>();
-  //     solve<order>(knots, basefilename, plot, l, z);
-  //   } else if (type == YAML::NodeType::Map) {
-  //     auto rmin = knot_node["rmin"].as<double>();
-  //     auto rmax = knot_node["rmax"].as<double>();
-  //     auto N = knot_node["N"].as<size_t>();
-  //     auto type = knot_node["type"].as<std::string>();
-  //     if (type == "linear") {
-  //       solve_lin<order>(N, rmin, rmax, basefilename, plot, l, z);
-  //     } else if (type == "exponential") {
-  //       auto expfac = knot_node["expfac"].as<double>();
-  //       solve_exp<order>(N, rmin, rmax, expfac, basefilename, plot, l, z);
-  //     } else {
-  //       throw std::runtime_error(
-  //           "'type' of knots must either be 'linear' or 'exponential'.");
-  //     }
-  //   } else {
-  //     throw std::runtime_error(
-  //         "Range node must either be list, scalar or a map defining "
-  //         "'type', 'N', 'rmin' and 'rmax'.");
-  //   }
-  // }
+  // std::string name("test");
+  // double energy =
+  //     solve<3>(knots_atom, knots_poisson, orbitals_Ne, 10, name, .4);
 }
