@@ -2,7 +2,6 @@
 text.usetex               : True
 font.family               : libertinus
 figure.figsize            : 4.5, 3
-figure.fontsize           : 11
 
 # Custom decimal separator (based on locale)
 axes.formatter.use_locale : False

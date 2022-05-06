@@ -244,7 +244,7 @@ template <int order>
 std::tuple<double, std::size_t> solve(
     std::vector<double>& knots_atom, std::vector<double>& knots_poisson,
     std::vector<std::tuple<int, int, int>>& orbitals, int z,
-    std::string& basefilename, double mixture = 0.4, double tol = 1e-4,
+    std::string& basefilename, double mixture = 0.4, double tol = 1e-6,
     std::size_t maxiter = 100) {
   using namespace std;
   using boost::math::quadrature::gauss;
@@ -408,7 +408,7 @@ std::tuple<double, std::size_t> solve(
   cout << "Total energy = " << energy << endl;
 
   // exporting/plotting
-  VectorXd xx = VectorXd::LinSpaced(1000, 0, 100);
+  VectorXd xx = VectorXd::LinSpaced(1000, 0, 10);
   VectorXd rho_x = VectorXd(xx.size());
   for (Index i = 0; i < xx.size(); i++) rho_x[i] = rho(xx[i]);
   NumpySaver(fmt::format("build/output/{}_rho.npy", basefilename))
@@ -453,7 +453,7 @@ std::vector<std::tuple<int, int, int>> to_tuples(
 }
 
 int main() {
-  int n_knots = 30;
+  int n_knots = 50;
   int n_knots_p = 1000;
 
   std::vector<double> knots_atom(n_knots);
@@ -475,6 +475,22 @@ int main() {
   Map<VectorXd> knots_map_p(knots_poisson.data(), knots_poisson.size());
   NumpySaver("build/output/knots_poisson.npy") << knots_map_p;
   NumpySaver("build/output/knots_atom.npy") << knots_map;
+
+  // Check the influence of the mixing factor
+  std::vector<std::tuple<int, int, int>> orbitals_Ne = {
+      {2, 1, 0}, {2, 2, 0}, {6, 2, 1}};  // N, n, l
+  std::vector<std::tuple<int, int, int>> orbitals_Nep = {
+      {2, 1, 0}, {2, 2, 0}, {5, 2, 1}};  // N, n, l
+
+  VectorXd etas = VectorXd::LinSpaced(50, 0, 1);
+  VectorXd iters(etas.size());
+  for (Index i = 0; i < etas.size(); i++) {
+    std::string name = fmt::format("eta_{}", etas[i]);
+    auto [energy, iter] =
+        solve<3>(knots_atom, knots_poisson, orbitals_Ne, 10, name, etas[i]);
+    iters[i] = iter;
+  }
+  NumpySaver("build/output/etas.npy") << etas << iters;
 
   // iterate through ALL the elements
   YAML::Node elements = YAML::LoadFile("build/output/pse.yaml");
@@ -506,7 +522,7 @@ int main() {
 
     Timer t;
     auto [energy, iter] =
-        solve<3>(knots_atom, knots_poisson, orbitals, z, symbol, .4);
+        solve<3>(knots_atom, knots_poisson, orbitals, z, symbol, .6);
     cout << "E=" << energy << " took " << iter << " iterations ("
          << t.elapsed_s() << "s)" << endl;
 
@@ -528,13 +544,4 @@ int main() {
 
   NumpySaver("build/output/elements.npy")
       << zs << es << iterss << es_ion << iterss_ion;
-
-  std::vector<std::tuple<int, int, int>> orbitals_Ne = {
-      {2, 1, 0}, {2, 2, 0}, {6, 2, 1}};  // N, n, l
-  std::vector<std::tuple<int, int, int>> orbitals_Nep = {
-      {2, 1, 0}, {2, 2, 0}, {5, 2, 1}};  // N, n, l
-
-  // std::string name("test");
-  // double energy =
-  //     solve<3>(knots_atom, knots_poisson, orbitals_Ne, 10, name, .4);
 }
