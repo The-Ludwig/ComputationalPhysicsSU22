@@ -154,8 +154,6 @@ int main() {
   string name("test");
   solve_lin_ground(1000, 344. * (1. - .3), 5e-5, 1e-2, name);
 
-  return 0;
-
   {
     vector<double> ns = {5, 10, 100, 1000, 10000, 100000};
     vector<double> iters, temps;
