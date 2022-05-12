@@ -52,17 +52,19 @@ Incoming radiation from below: Infrared radiation from the lower adjacent cell $
 already absorbed by other cells $T_{i-1}^{\mathrm{out, IR}}$. 
 If we summarize this the cell $i$ absorbs (and thus emits, since we are in equilibrium) in total 
 $$
+\begin{split}
 A_i = E_i 
 = \left(\frac{E_{i+1}+E_{i-1}}{2}+T_{i-1}^{\mathrm{out, IR}}+T_{i+1}^{\mathrm{in, IR}}\right)
- \left(1-e^{-\sigma_{\mathrm{IR}} \rho_i h}\right)
+ \left(1-e^{-\sigma_{\mathrm{IR}} \rho_i h}\right)\\
 +  T_{i+1}^{\mathrm{in, V}}\left(1-e^{-\sigma_{\mathrm{V}} \rho_i h}\right).
+\end{split}
 $$
 
 Where $\rho_i$ is the density of the cell, $h$ it's width, $\sigma_{\mathrm{IR}}$ the cross section for 
 the infrared light and $\sigma_{\mathrm{V}}$ the cross section for visual light.
 For the sake of simplicity we will calculate the density with the barometric formula
 $$
-\rho_i = \rho_i \exp\left[\frac{-g_0 M \left(h_i-h_0\right)}{R^* T_0}\right].
+\rho_i = \rho_i \exp\!\left(\frac{-g_0 M \left(h_i-h_0\right)}{R^* T_0}\right).
 $$
 
 The self-consistency equations for the 3 types of transmitted rations are
@@ -83,3 +85,24 @@ We can then evaluate Stefan-Boltzman's law in every layer to get the temperature
 
 
 # Results
+Before discussing my results, I have to admit, that there seems to be a bug in the code, I can't get rid of. 
+The results seem to be heavily dependent of the exact absorption parameter, more than I expect. I am also 
+not sure about the exact temperature curve as dependent of height, there seems to be a jump. 
+I think the results are best discussed in the following plots.
+
+![The temperature dependend on the height. This used $N=1000$ layers and $\alpha_{\mathrm{vis}} = 5\cdot 10^{-5}$, $\alpha_{\mathrm{IR}} = 10^{-2}$. The temperature at the ground is $T=34 \mathrm{{}^oC}$ and it needed 22616 iterations to converge.](build/plots/temperature.pdf)
+
+![The number of iterations needed to converge depending on the number of layers. $\alpha_{\mathrm{vis}} = 5\cdot 10^{-5}$ $\alpha_{\mathrm{IR}} = 10^{-2}$](build/plots/ns_iters.pdf)
+
+![The resulting temperature depending on the number of layers. $\alpha_{\mathrm{vis}} = 5\cdot 10^{-5}$ $\alpha_{\mathrm{IR}} = 10^{-2}$](build/plots/ns_temps.pdf)
+
+![The number of iterations needed to converge depending on the infrared interaction factor.$\alpha_{\mathrm{vis}} = 5\cdot 10^{-5}$](build/plots/sigma_ir_iters.pdf)
+
+![The temperature depending on the infrared interaction factor.$\alpha_{\mathrm{vis}} = 5\cdot 10^{-5}$](build/plots/sigma_ir_temps.pdf)
+
+![The number of iterations needed to converge depending on the visual interaction factor.$\alpha_{\mathrm{IR}} = 10^{-2}$](build/plots/sigma_vis_iters.pdf)
+
+![The temperature depending on the visual interaction factor.$\alpha_{\mathrm{IR}} = 10^{-2}$](build/plots/sigma_vis_temps.pdf)
+
+# Remarks
+As already mentioned, there seems to be some fault in the code, I can not identify and fix in time. For example the outgoing radiation in the topmost layer does not match the incoming radiation, which indicates some calculation error.

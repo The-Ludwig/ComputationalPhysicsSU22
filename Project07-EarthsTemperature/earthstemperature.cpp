@@ -152,7 +152,7 @@ int main() {
   using namespace std;
 
   string name("test");
-  solve_lin_ground(1000, 344. * (1. - .3), 5e-5, 1e-3, name);
+  solve_lin_ground(1000, 344. * (1. - .3), 5e-5, 1e-2, name);
 
   return 0;
 
