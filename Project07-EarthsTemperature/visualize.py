@@ -1,12 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from yaml import safe_load
+import seaborn as sns
 
-with open("config.yaml") as f:
-    config = safe_load(f)
+sns.set()
 
+hs, rho, e, t_in_v, ts = np.genfromtxt("build/output/test.npy", unpack=True)
 
-x, y = np.genfromtxt(f"build/output/{config['name']}.npy", unpack=True)
+plt.plot(ts[:-1], hs[:-1] / 1000)
+plt.xlabel(r"Temperature $T / \mathrm{{}^oC}$")
+plt.ylabel(r"Height $h / \mathrm{km}$")
 
-plt.plot(x, y)
-plt.savefig(f"build/plots/{config['name']}.pdf")
+# plt.gca().twiny().plot(rho, hs / 1000)
+# plt.xlabel(r"Density $\rho / \mathrm{kg/m^3}$")
+
+plt.tight_layout()
+plt.savefig("build/plots/temperature.pdf")

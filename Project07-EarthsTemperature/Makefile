@@ -1,5 +1,5 @@
 EXECUTABLE=$(shell pwd |  sed -e 's/.*\///' -e 's/\(.*\)/\L\1/' -e 's/project[0-9][0-9]-//')
-PLOTS=test.pdf
+PLOTS=temperature.pdf
 OUTPUT=test.npy
 
 # 'Debug' or 'Release'
