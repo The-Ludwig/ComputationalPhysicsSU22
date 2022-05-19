@@ -1,0 +1,7 @@
+[requires]
+boost/1.78.0
+libpng/1.6.37
+
+[generators]
+cmake_find_package
+cmake_paths
