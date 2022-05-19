@@ -1,0 +1,63 @@
+\section{Discrete Fourier Transform}
+
+The \emph{Discrete Fourier Transform (DFT)} of a series of complex numbers $x_0, \dots, x_{N-1}$
+are the $N$ numbers defined as
+\begin{equation}
+    X_k = \frac{1}{\sqrt{N}}\sum_{n=0}^{N-1} x_n e^{-in\frac{2\pi}{N} k}.
+\end{equation}
+
+For intuitive understanding one can think of $X_k$ as the intensity of the frequency,
+$\omega = k 2\pi / N$ in the signal.
+
+For a deeper understanding let's take a step back and remember that Fourier
+found that a periodic function can be represented as a weighted sum of cosine and
+sine functions.
+This does not only apply for continuous, but also discontinuous functions,
+such as a square wave.
+To put it in a more mathematical way: The
+$L^2([0, T])$-space\footnote{This means every complex-valued function defined on $[0, T]$, which's absolute square is integrable over $[0, T]$.}
+has the orthonormal basis functions
+\begin{equation}
+    \phi_k(x)=\exp\left({-2ikx\frac{2\pi}{T}}\right) \quad k\in \mathbb{Z},
+\end{equation}
+so any function $f(x)\in L^{2}([0, T])$ can be written as
+\begin{equation}
+    f(x) \equiv \sum_{k=-\infty}^{\infty} \underbrace{\left< f, \phi_k \right>}_{a_k} \phi_k(x)
+    = \sum_{k=-\infty}^{\infty} {a_k} \exp\left({-2ikx\frac{2\pi}{T}}\right)
+\end{equation}
+where $\equiv$ means "equals almost everywhere under the norm induced by the scalar product $\left<\cdot,\cdot\right>$".
+This sum is called a Fourier series.
+The scalar product (and thus the norm) in this space is
+\begin{equation}
+    \left< f, g\right> = \int_0^T f(x)g^*(x) \dif x.
+\end{equation}
+Thus, the Fourier coefficients $a_k$ are
+\begin{equation}
+    a_k = \int_0^T f(x) \exp\left({2ikx\frac{2\pi}{T}}\right) \dif x
+\end{equation}
+This is a very abstract definition, but if we get used to the math,
+this only precises the findings of Fourier: A periodic function
+(our functions are restricted to $[0, T]$, but they can be thought of as being periodically continued everywhere else)
+can be represented as a weighted (infinite) sum of sines and cosines (in our formulation hidden with the Euler identity in $e^{ix}$).
+
+If we now have a function which is neither confined nor periodic, we can handwavely argue, that $T$ goes to infinity and
+that we need a continues set of basis functions. This is a way of approaching the continuous \emph{Fourier Transform (FT)}.
+The idea of the FT is to transform the original function $f$ to another function $\hat f$ without loosing any information and thus being
+able to transform the function back.
+The transformation is similar to the definition of the Fourier coefficients
+\begin{equation}
+    \hat f(\omega) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{\infty} f(x) e^{-i2\pi\omega x} \dif x.
+\end{equation}
+The inverse Fourier transform is given by
+\begin{equation}
+    f(\omega) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{\infty} \hat f(\omega) e^{i2\pi\omega x} \dif \omega.
+\end{equation}
+For this the function $f: \mathbb{R}\to \mathbb{C}$ only has to be absolutely integrable, so that
+$\int_{\mathbb{R}} \abs{f(x)} \dif x$ is defined.
+Again $\hat f(\omega)$ can be thought of as the intensity of the frequency $\omega$ in the function. That's
+why we name the domain $\omega$ and $\hat f$ is often called $f$ in frequency-space.
+This definition is easily extended to functions which take multi-dimensional input $f: \mathbb{R}^n \to \mathbb{X}$
+\begin{equation}
+    \hat f(\vec \omega) = \frac{1}{\sqrt{2\pi}} \int_{\mathbb{R}^n} f(\vec x) e^{-i2\pi\vec \omega \cdot \vec x} \dif x^n.
+\end{equation}
+And the inverse transform likewise.

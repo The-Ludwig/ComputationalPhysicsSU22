@@ -1,0 +1,110 @@
+% useful makros
+\ExplSyntaxOn
+
+\DeclareSIUnit\century{century}
+\DeclareSIUnit\year{yr}
+
+\makeatletter % allows me to use @
+\NewDocumentCommand \showfont {} 
+{encoding: \f@encoding{},
+  family: \f@family{},
+  series: \f@series{},
+  shape: \f@shape{},
+  size: \f@size{}
+}
+\NewDocumentCommand \symbfiftextbf {m}
+{
+    \ifthenelse{\equal{\f@series}{bx}\or\equal{\f@series}{b}}{\symbf{#1}}{#1}
+}
+
+\makeatother
+
+\AtBeginDocument{
+\let\ltext=\l
+\RenewDocumentCommand \l {}
+{
+    \TextOrMath{ \ltext }{ \mleft }
+}
+\let\raccent=\r
+\RenewDocumentCommand \r {}
+{
+    \TextOrMath{ \raccent }{ \mright }
+}
+}
+\NewDocumentCommand \dif {}
+{
+    \mathinner{\symup{d}\mathchoice{\!}{\!}{}{} }
+}
+
+\ExplSyntaxOff
+\NewDocumentCommand \tindex {mm}
+{
+    {#1_{\symup{#2}}}
+}
+\ExplSyntaxOn
+
+\setlength{\delimitershortfall}{-1sp}
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+\DeclarePairedDelimiter\bra{\langle}{\rvert}
+\DeclarePairedDelimiter\ket{\lvert}{\rangle}
+\DeclarePairedDelimiterX\braket[2]{\langle}{\rangle}{#1 \delimsize\vert #2}
+
+\NewDocumentCommand\xDeclarePairedDelimeter{mmm}
+{%
+\NewDocumentCommand#1{som}{%
+\IfNoValueTF{##2}
+    {\IfBooleanTF{##1}{#2##3#3}{\mleft#2##3\mright#3}}
+{\mathopen{##2#2}##3\mathclose{##2#3}}%
+}%
+}
+\xDeclarePairedDelimeter{\set}{\lbrace}{\rbrace}
+
+\let\mysubsection=\subsection
+\RenewDocumentCommand\subsection{m}
+{
+    \FloatBarrier
+    \mysubsection{#1}
+}
+
+\NewDocumentCommand{\anti} {m}
+{
+    \overline{#1}
+}
+
+\AtBeginDocument{
+    \RenewDocumentCommand \Re {} {\operatorname{Re}}
+    \RenewDocumentCommand \Im {} {\operatorname{Im}}
+}
+
+\NewDocumentCommand{\mat}{m}{
+    \symbf{#1}
+}
+
+\ExplSyntaxOff
+
+
+% to use the LHCb colors, the same as in the plots
+\definecolor{lhcb1}{HTML}{1f77b4}
+\definecolor{lhcb2}{HTML}{ff7f0e}
+\definecolor{lhcb3}{HTML}{2ca02c}
+\definecolor{lhcb4}{HTML}{d62728}
+\definecolor{lhcb5}{HTML}{9467bd}
+\definecolor{lhcb6}{HTML}{8c564b}
+\definecolor{lhcb7}{HTML}{e377c2}
+\definecolor{lhcb8}{HTML}{7f7f7f}
+\definecolor{lhcb9}{HTML}{bcbd22}
+\definecolor{lhcb10}{HTML}{17becf}
+
+\definecolor{mDarkBrown}{HTML}{604c38}
+\definecolor{mDarkTeal}{HTML}{23373b}
+\definecolor{mLightBrown}{HTML}{EB811B}
+\definecolor{mLightGreen}{HTML}{14B03D}
+\definecolor{vertexDarkGrey}{HTML}{23373b}
+\definecolor{vertexLightGrey}{rgb}{0.833333333,0.8117647064,0.790196078}
+\colorlet{vertexDarkRed}{red!70!black}
+\colorlet{vertexLightRed}{vertexDarkRed!60!white}
+\colorlet{vertexDarkGreen}{green!70!black}
+\colorlet{vertexLightGreen}{vertexDarkGreen!50!white}
+\colorlet{vertexDarkBlue}{blue!70!black}
+\colorlet{vertexLightBlue}{vertexDarkBlue!50!white}

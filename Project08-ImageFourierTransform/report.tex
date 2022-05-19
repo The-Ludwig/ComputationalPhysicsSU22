@@ -1,0 +1,44 @@
+% Choose scrartcl (normal document)
+\documentclass[
+  bibliography=totoc,     % Literatur im Inhaltsverzeichnis
+  captions=tableheading,  % Tabellenüberschriften
+  titlepage=false, % Titelseite ist nicht Deckblatt
+  twocolumn=true,
+  parskip= half,
+  abstract=true,
+  DIV=25
+]{scrartcl}
+
+% Set language here
+\usepackage[english]{babel}
+
+\input{header.tex}
+
+\title{Fourier Transform of Images}
+\subject{Computational Physics -- 08 }
+\author{Ludwig Neste}
+
+\addbibresource{references.bib}
+
+
+\begin{document}
+
+% For the beamer class:
+%\begin{frame}
+%	\titlepage
+%\end{frame}
+%\begin{frame}{Table of contents}
+%	\setbeamertemplate{section in toc}[sections numbered]
+%	\tableofcontents[hideallsubsections]
+%\end{frame}
+
+\maketitle
+
+\input{report/introduction.tex}
+
+
+\newpage
+\printbibliography
+
+\end{document}
+

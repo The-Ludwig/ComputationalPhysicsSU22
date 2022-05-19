@@ -24,8 +24,24 @@ build/exercise.zip: build/report.pdf | build
 	zip -r build/exercise . --exclude build/\*
 	rm report.pdf
 
+
+TEXOPTIONS = -lualatex \
+		--output-directory=build \
+		--interaction=nonstopmode \
+		--halt-on-error \
+		--use-make \
+		--synctex=1 \
+
+TEXPREFIX = TEXINPUTS=build: \
+	BIBINPUTS=build: \
+	max_print_line=1048576 \
+
+# Use this to work on tex-document, it will be updated continuesly by latexmk
+work: FORCE | build
+	$(TEXPREFIX) latexmk -pvc $(TEXOPTIONS) report.tex
+
 build/report.pdf: report.md $(PLOT_PATHS) | build
-	pandoc report.md --number-sections --citeproc --bibliography=references.bib --pdf-engine-opt=--shell-escape -f markdown -o build/report.pdf  
+	$(TEXPREFIX) latexmk $(TEXOPTIONS) report.tex
 
 $(PLOT_PATHS)&: visualize.py $(OUTPUT_PATHS) | build
 	python visualize.py
