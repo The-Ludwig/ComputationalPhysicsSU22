@@ -3,11 +3,10 @@
 The \emph{Discrete Fourier Transform (DFT)} of a series of complex numbers $x_0, \dots, x_{N-1}$
 are the $N$ numbers defined as
 \begin{equation}
-    X_k = \frac{1}{\sqrt{N}}\sum_{n=0}^{N-1} x_n e^{-in\frac{2\pi}{N} k}.
+    X_k = \frac{1}{\sqrt{N}}\sum_{n=0}^{N-1} x_n e^{-i\frac{2\pi}{N}n k}.
 \end{equation}
-
 For intuitive understanding one can think of $X_k$ as the intensity of the frequency,
-$\omega = k 2\pi / N$ in the signal.
+$\nu =\frac{\omega}{2\pi}= k / N$ in the signal.
 
 For a deeper understanding let's take a step back and remember that Fourier
 found that a periodic function can be represented as a weighted sum of cosine and
@@ -33,7 +32,7 @@ The scalar product (and thus the norm) in this space is
 \end{equation}
 Thus, the Fourier coefficients $a_k$ are
 \begin{equation}
-    a_k = \int_0^T f(x) \exp\left({2ikx\frac{2\pi}{T}}\right) \dif x
+    a_k = \int_0^T f(x) \exp\left({ikx\frac{2\pi}{T}}\right) \dif x
 \end{equation}
 This is a very abstract definition, but if we get used to the math,
 this only precises the findings of Fourier: A periodic function
@@ -46,18 +45,88 @@ The idea of the FT is to transform the original function $f$ to another function
 able to transform the function back.
 The transformation is similar to the definition of the Fourier coefficients
 \begin{equation}
-    \hat f(\omega) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{\infty} f(x) e^{-i2\pi\omega x} \dif x.
+    \hat f(\nu) = \int_{-\infty}^{\infty} f(x) e^{-i2\pi\nu x} \dif x.
 \end{equation}
 The inverse Fourier transform is given by
 \begin{equation}
-    f(\omega) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^{\infty} \hat f(\omega) e^{i2\pi\omega x} \dif \omega.
+    f(x) = \int_{-\infty}^{\infty} \hat f(\nu) e^{i2\pi\nu x} \dif \nu.
 \end{equation}
 For this the function $f: \mathbb{R}\to \mathbb{C}$ only has to be absolutely integrable, so that
 $\int_{\mathbb{R}} \abs{f(x)} \dif x$ is defined.
-Again $\hat f(\omega)$ can be thought of as the intensity of the frequency $\omega$ in the function. That's
-why we name the domain $\omega$ and $\hat f$ is often called $f$ in frequency-space.
-This definition is easily extended to functions which take multi-dimensional input $f: \mathbb{R}^n \to \mathbb{X}$
+
+The correctness of the inverse-rule can be shown if we express the Dirac $\delta$-function as
 \begin{equation}
-    \hat f(\vec \omega) = \frac{1}{\sqrt{2\pi}} \int_{\mathbb{R}^n} f(\vec x) e^{-i2\pi\vec \omega \cdot \vec x} \dif x^n.
+    \delta(x) = \int_{-\infty}^{\infty} e^{-i2\pi \nu x} \dif \nu.
+\end{equation}
+
+Again $\hat f(\nu)$ can be thought of as the intensity of the frequency $\nu$ in the function. That's
+why we name the domain $\nu$ and $\hat f$ is often called $f$ in frequency-space.
+This definition is easily extended to functions which take multi-dimensional input $f: \mathbb{R}^n \to \mathbb{C}$
+\begin{equation}
+    \hat f(\vec \nu) = \int_{\mathbb{R}^n} f(\vec x) e^{-i2\pi\vec \nu \cdot \vec x} \dif{}^n x.
 \end{equation}
 And the inverse transform likewise.
+
+Now we can motivate the DFT: If we define a function (to be exact: a distribution) as
+\begin{equation}
+    f(x) = \frac{1}{\sqrt N} \sum_{n=0}^{N-1} x_n\ \delta\left(x-{n}\right)
+\end{equation}
+the DFT of the points is the FT of this function at the frequencies $k/N$
+\begin{equation}
+    \begin{split}
+        \hat f\left(\frac{k}{N}\right) = \int_{-\infty}^{\infty}  \frac{1}{\sqrt N} \sum_{n=0}^{N-1}
+        x_n\ \delta\left(x-{n}\right) e^{-i2\pi\frac{k}{N} x} \dif x\\
+        = \frac{1}{\sqrt N} \sum_{n=0}^{N-1} x_n e^{-i2\pi k \frac{n}{N}}
+        = X_k.
+    \end{split}
+\end{equation}
+And likewise, if we define the function
+\begin{equation}
+    F(\nu) = \frac{1}{\sqrt N} \sum_{n=0}^{N-1} X_n\ \delta\left(\nu-{n}\right)
+\end{equation}
+it's inverse FT at $k/N$ is the inverse DFT of the points $X_k$
+\begin{equation}
+    \begin{split}
+        \hat F\left(\frac{k}{N}\right)
+        = \int_{-\infty}^{\infty}  \frac{1}{\sqrt N} \sum_{n=0}^{N-1}
+        X_n\ \delta\left(\nu-{n}\right) e^{i2\pi\frac{k}{N} \nu} \dif \nu\\
+        = \frac{1}{\sqrt N} \sum_{n=0}^{N-1} X_n e^{i2\pi k \frac{n}{N}}
+        = \frac{1}{N} \sum_{n,m=0}^{N-1}
+        x_m e^{-i2\pi \frac{n}{N}(m-k)}\\
+        =  \sum_{m=0}^{N-1}
+        x_m\delta_{m,k} = x_k.
+    \end{split}
+\end{equation}
+Where we have used the relation with the geometric series
+\begin{equation}
+    \frac{1}{N}
+    \sum_{n=0}^{N-1}
+    e^{-i2\pi \frac{n}{N}(m-k)}=
+    \begin{cases}
+        \frac{1-e^{-i2\pi (m-k)}}{1-e^{-i2\pi\frac{m-k}{N}}} = 0 & \forall m\neq k \\
+        1                                                        & \forall m=k
+    \end{cases}
+    = \delta_{m,k}.
+\end{equation}
+The definition of the function might seem abstract at first glance, but it is nothing
+more than a more mathematical way of expressing, that we only have $N$ samples of
+an unknown functions at these points.
+The normalization factor of $1/\sqrt N$ is chosen so the inverse transform does not rescale
+the points.
+
+As with the FT, the DFT is easily enlarged to more dimensions
+\begin{equation}
+    X_{l,m,n} = \frac{1}{\sqrt{N_1N_2N_3}}\sum_{i=0}^{N_1-1}\sum_{j=0}^{N_2-1}\sum_{k=0}^{N_3-1} x_{i,j,k} e^{-i{2\pi}\ \left(\!\frac{li}{N_1}+\frac{mj}{N_2}+\frac{nk}{N_3}\right)}.
+\end{equation}
+and the inverse
+\begin{equation}
+    x_{l,m,n} = \frac{1}{\sqrt{N_1N_2N_3}}\sum_{i=0}^{N_1-1}\sum_{j=0}^{N_2-1}\sum_{k=0}^{N_3-1} X_{i,j,k} e^{i{2\pi}\ \left(\!\frac{li}{N_1}+\frac{mj}{N_2}+\frac{nk}{N_3}\right)}.
+\end{equation}
+I chose the three-dimensional example here, since we are going to look at images with a color channel, which is three dimensional data.
+Other dimensionalities are analogous.
+
+Since we will only have real numbers, we can restrict the DFT to real numbers:
+
+\section{The Numerical Implementation: The Fast Fourier Transform}
+Implementing directly the definition of the DFT might not be very slow, but we can do extremely better
+using the fast Fourier transform (FFT) algorithm.
