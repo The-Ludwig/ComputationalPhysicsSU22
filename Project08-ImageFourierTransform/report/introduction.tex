@@ -1,9 +1,9 @@
 \section{Discrete Fourier Transform}
 
-The \emph{Discrete Fourier Transform (DFT)} of a series of complex numbers $x_0, \dots, x_{N-1}$
+The \emph{Discrete Fourier Transform (DFT)} of a series of complex numbers $\vec x = x_0, \dots, x_{N-1}$
 are the $N$ numbers defined as
 \begin{equation}
-    X_k = \frac{1}{\sqrt{N}}\sum_{n=0}^{N-1} x_n e^{-i\frac{2\pi}{N}n k}.
+    X_k = \symcal{F}\left(\vec x\right)_k = \frac{1}{\sqrt{N}}\sum_{n=0}^{N-1} x_n e^{-i\frac{2\pi}{N}n k}.
 \end{equation}
 For intuitive understanding one can think of $X_k$ as the intensity of the frequency,
 $\nu =\frac{\omega}{2\pi}= k / N$ in the signal.
@@ -125,8 +125,103 @@ and the inverse
 I chose the three-dimensional example here, since we are going to look at images with a color channel, which is three dimensional data.
 Other dimensionalities are analogous.
 
-Since we will only have real numbers, we can restrict the DFT to real numbers:
+\subsection{Real Numbered Input Data}
+An image will only contain real numbered input values. This yields the following symmetry in the transformation
+\begin{equation}
+    X_{l,m,n} = X^*_{N_1-l,N_2-m,N_3-m}.
+    \label{eqn:realFSymmetry}
+\end{equation}
+On the one hand, this is a very useful result: If we transform an image consisting of $N=N_1N_2N_3$ real numbers,
+we do not want to end up with $N$ complex or $2N$ real numbers.
+On the other hand this poses a challenge in displaying the transformed image.
+Usually we can only display the magnitude of the transformed image.
+
+Since it seems quite artificial to introduce complex numbers in a problem only consisting of real numbers,
+for image processing usually a very closely related transform is used, the \emph{Discrete Cosine Transfrom (DCT)}.
+It transforms $N$ real-valued input numbers to $N$ real-valued output numbers.
+The transform is given by
+\begin{equation}
+    \begin{split}
+        X_k = \symcal{C}\left(\vec x\right)_k = \frac{2c_k}{\sqrt N}\sum_{n=0}^{N-1}x_n \cos \left(\frac{\pi\left(2n+1\right)k}{2N} \right)
+        \\
+        \text{where }
+        c_k =
+        \begin{cases}
+            \frac{1}{\sqrt{2}} \quad & k=0           \\
+            1                        & \text{ else }
+        \end{cases}
+    \end{split}
+\end{equation}
+and it's inverse by
+\begin{equation}
+    x_k = \symcal{C}^{-1}\left(\vec X\right)_k =\frac{1}{\sqrt N}\sum_{n=1}^{N-1}c_k X_n \cos \left(\frac{\pi(2k+1)}{2N}\right).
+\end{equation}
+\cite{DCT}
+The DCT can be calculated using the DFT. An efficient algorithm for this from \cite{DCTUFFT} first reorders the points to
+\begin{equation}
+    \begin{rcases}
+        x'_k       & = x_{2k}  \\
+        x'_{N-1-k} & =x_{2k+1}
+    \end{rcases}
+    k=0,1, \dots, \frac{N}{2}-1
+\end{equation}
+to obtain the relation
+\begin{equation}
+    \symcal{C}\left(\vec x\right)_k = X_k =2 c_k
+    \Re e^{i\pi\frac{k}{2N}}\symcal{F}^{-1}\left(\vec x'\right)_k
+\end{equation}
+and similar it's inverse
+\begin{equation}
+    \symcal{C}^{-1}\left(\vec X\right)_{2k} = x_{2k} =
+    \Re \symcal{F}^{-1}\left\{c_lX_le^{i\frac{\pi l}{2N}}\right\}_k.
+\end{equation}
+Note, that we only need to calculate half of the Fourier coefficients, if we make use of
+Equation \eqref{eqn:realFSymmetry}.
 
 \section{The Numerical Implementation: The Fast Fourier Transform}
-Implementing directly the definition of the DFT might not be very slow, but we can do extremely better
-using the fast Fourier transform (FFT) algorithm.
+Firstly, we notice that the multidimensional discrete Fourier transform is
+separable into multiple one dimensional DFT, performed one after another.
+Thus, we will concentrate on optimizing the one dimensional DFT.
+
+We can see that the direct implementation of the DFT is like a matrix-multiplication
+\footnote{In fact, it is possible to interpret the DFT as a curve fitting problem with the design matrix $A_{m,n}=e^{-i2\pi\frac{mn}{N}} / \sqrt{N}$.}.
+As that, the computational complexity of the bare DFT implementation scales with $\symcal{O}(N^2)$.
+But the concrete form of the transform allows us to get down to $\symcal{O}(N\log N)$.
+From this scaling law, we can already guess, that we will use a divide-and-conquer algorithm.
+The basic idea is to express the Fourier transform of $N$ points in multiple smaller Fourier transforms, and thus dividing and conquering.
+Let's assume $N$ is even and observe that
+\begin{equation}
+    \begin{split}
+        X_k &= \frac{1}{\sqrt{N}}\sum_{n=0}^{N-1} x_n e^{-i\frac{2\pi}{N}n k}\\
+        &=\frac{1}{\sqrt N}
+        \sum_{n=0}^{N/2-1} x_{2n} e^{-i\frac{2\pi}{N}2n k}+
+        \frac{1}{\sqrt N}
+        \sum_{n=0}^{N/2-1} x_{2n+1} e^{-i\frac{2\pi}{N}(2n+1) k}\\
+        &= \frac{1}{\sqrt 2}
+        \symcal{F}\left\{x_{2n}\right\}_k
+        +\frac{1}{\sqrt 2}
+        e^{-i\frac{2\pi}{N}k}\symcal{F}\left\{x_{2n+1}\right\}_k.
+    \end{split}
+\end{equation}
+The last expression is only defined up to $k=N/2$, but for the other half we get
+\begin{equation}
+    X_{k+\frac{N}{2}}=\frac{1}{\sqrt 2}
+    \symcal{F}\left\{x_{2n}\right\}_k
+    -\frac{1}{\sqrt 2}
+    e^{-i\frac{2\pi}{N}k}\symcal{F}\left\{x_{2n+1}\right\}_k.
+\end{equation}
+Here we have expressed the DFT of $N$ points as the DFT of the $N/2$ even points and $N/2$ odd points.
+This is called the \emph{Fast Fourier Transform (FFT)}, to be precise the radix-2-decimation-in-time Cooley-Tukey algorithm.
+It was originally discovered by Gauss, but due to the lack of computers at his time, it was not a very known result.
+Cooley and Tukey rediscovered the algorithm 160 years later in the sixties and popularized it.
+
+We can similarly express the inverse DFT by noticing
+\begin{equation}
+    \symcal{F}^{-1}\left\{x_n\right\}
+    =\symcal{F}\left\{x_{N-n}\right\}
+    =\symcal{F}\left\{x_{n}^*\right\}^*.
+\end{equation}
+Thus, we only need the implementation of the DFT to also get the inverse DFT.
+
+The complete divide and conquer in this form only works for $N$, which are powers of two.
+It is possible to generalize this.
