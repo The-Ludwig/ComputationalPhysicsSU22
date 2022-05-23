@@ -1,6 +1,6 @@
 EXECUTABLE=$(shell pwd |  sed -e 's/.*\///' -e 's/\(.*\)/\L\1/' -e 's/project[0-9][0-9]-//')
-PLOTS=
-OUTPUT=
+PLOTS=test.pdf
+OUTPUT=test.npy
 
 # 'Debug' or 'Release'
 BUILD_TYPE=Release
@@ -10,7 +10,7 @@ GCC_PATH=$(shell which g++)
 PLOT_PATHS=$(addprefix build/plots/,$(PLOTS))
 OUTPUT_PATHS=$(addprefix build/output/,$(OUTPUT))
 
-$(info NAME=$(EXECUTABLE))
+$(info NAME=$(EXECUTAEigen3::EigenBLE))
 $(info OUTPUT_PATHS=$(OUTPUT_PATHS))
 $(info PLOT_PATHS=$(PLOT_PATHS))
 $(info g++=$(GCC_PATH))
@@ -40,7 +40,7 @@ TEXPREFIX = TEXINPUTS=build: \
 work: FORCE | build
 	$(TEXPREFIX) latexmk -pvc $(TEXOPTIONS) report.tex
 
-build/report.pdf: report.md $(PLOT_PATHS) | build
+build/report.pdf: report.tex $(PLOT_PATHS) | build
 	$(TEXPREFIX) latexmk $(TEXOPTIONS) report.tex
 
 $(PLOT_PATHS)&: visualize.py $(OUTPUT_PATHS) | build
