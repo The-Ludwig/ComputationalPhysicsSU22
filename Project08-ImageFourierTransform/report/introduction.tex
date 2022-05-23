@@ -224,4 +224,33 @@ We can similarly express the inverse DFT by noticing
 Thus, we only need the implementation of the DFT to also get the inverse DFT.
 
 The complete divide and conquer in this form only works for $N$, which are powers of two.
-It is possible to generalize this.
+But, it is possible to generalize this to any composite number of the form $N=N_1N_2$.
+In that case we will combine $N_1$ smaller DFT with a DFT of size $N_2$\footnote{Note that the combination rule for the even $N$ case can be understood as a DFT of two points.}.
+For a full description see \cite{CTAlg}.
+Note that this yields problems, if our input data has prime-number length, for this special case there
+exist an algorithm allowing the DFT of prime-number-sized points in $N\log N$ time, using group-theory
+of prime-numbered modulo groups. The algorithm is called \emph{Rader's algorithm}, see \href{https://en.wikipedia.org/wiki/Rader%27s_FFT_algorithm}{en.wikipedia.org/wiki/Rader\%27s\_FFT\_algorithm}.
+
+
+\section{Applications}
+One of the most notable places the Fourier transform appears in physics is the
+Fraunhofer-diffraction equation. In the far-field approximation, the diffraction image
+of an incoming planar wave is proportional to the 2D-Fourier transform of the aperture:
+\begin{equation}
+    A(x, y, z) \propto \iint_{\symup{Aperture}}\hspace{-3em} e^{-i\frac{2\pi}{\lambda z}(x'x+y'y)} \dif x' \dif y'
+\end{equation}
+Thus, if we use a DFT of an image resembling an aperture, we can numerically approximate the diffraction image.
+Every photograph taken is slightly distorted through diffraction effects through the aperture.
+In space-telescopes for example the reflection mirror needs to be attached to the rest of the satellite,
+and the light from stars is diffracted at the attached rods, which creates the typical 4 or 6-fold diffraction
+symmetry of star-pictures.
+This can be removed from images through image editing in Fourier-space.
+
+Another application is the lossy compression of images, sound and other media types.
+An image can be for example saved by performing a Fourier transform and discarding the lowest amplitudes and just
+saving the rest. This is what (among other tricks) the \texttt{.jpg} image format does.
+
+Images can also be enhanced with Fourier transform. Assume for example we take a photograph through an insect-net.
+We will have periodic information overlaying the picture. This can be easily removed in Fourier space.
+And by removing high-frequencies the sharpness can be increased.
+
