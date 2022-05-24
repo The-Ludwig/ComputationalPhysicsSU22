@@ -181,7 +181,10 @@ Equation \eqref{eqn:realFSymmetry}.
 \section{The Numerical Implementation: The Fast Fourier Transform}
 Firstly, we notice that the multidimensional discrete Fourier transform is
 separable into multiple one dimensional DFT, performed one after another.
-Thus, we will concentrate on optimizing the one dimensional DFT.
+Thus, we will concentrate on optimizing the one dimensional DFT:
+\begin{equation}
+    X_{l,m} = \symcal{F} \left\{\symcal{F}\{(x_i)_j\}_m\right\}_l
+\end{equation}
 
 We can see that the direct implementation of the DFT is like a matrix-multiplication
 \footnote{In fact, it is possible to interpret the DFT as a curve fitting problem with the design matrix $A_{m,n}=e^{-i2\pi\frac{mn}{N}} / \sqrt{N}$.}.

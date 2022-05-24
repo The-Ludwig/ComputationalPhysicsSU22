@@ -49,7 +49,7 @@ $(PLOT_PATHS)&: visualize.py $(OUTPUT_PATHS) | build
 $(OUTPUT_PATHS)&: build/$(EXECUTABLE) config.yaml | build
 	build/$(EXECUTABLE)
 
-build/$(EXECUTABLE): build/Makefile $(EXECUTABLE).cpp | build 
+build/$(EXECUTABLE): FORCE
 #	cmake -DNAME:STRING=$(EXECUTABLE) --build build 
 	$(MAKE) -C build
 
