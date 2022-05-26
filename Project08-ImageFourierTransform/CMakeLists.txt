@@ -37,3 +37,15 @@ add_executable(${NAME} ${NAME}.cpp)
 target_link_libraries(${NAME} PUBLIC utils)
 target_compile_features(${NAME} PUBLIC cxx_std_17)
 target_link_libraries(${NAME} PUBLIC Boost::boost PNG::PNG Eigen3::Eigen)
+
+
+add_executable(img_dft img_dft.cpp)
+target_link_libraries(img_dft PUBLIC utils)
+target_compile_features(img_dft PUBLIC cxx_std_17)
+target_link_libraries(img_dft PUBLIC Boost::boost PNG::PNG Eigen3::Eigen)
+
+
+add_executable(img_dct img_dct.cpp)
+target_link_libraries(img_dct PUBLIC utils)
+target_compile_features(img_dct PUBLIC cxx_std_17)
+target_link_libraries(img_dct PUBLIC Boost::boost PNG::PNG Eigen3::Eigen)

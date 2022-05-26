@@ -45,34 +45,29 @@ void dft(const SrcIter_t src, DstIter_t dest, size_t len) {
   }
 }
 
-void fft_power_of_two(const double* src, complex<double>* dest, size_t len) {
-  typedef complex<double> cmp;
+template <class SrcIter_t, class DstIter_t>
+void fft_power_of_two(const SrcIter_t src, DstIter_t dest, size_t len) {
+  typedef typename std::iterator_traits<DstIter_t>::value_type cmp_dest;
+
   size_t log2n = 0;
   while ((len >> ++log2n) != 0) {
   };
   log2n--;
 
-  // reorder
+  // reorder (bit_reverse)
   size_t m = 0;
-  for (size_t k = 0; k < len; k++) {
-    size_t src_idx;
-    do {
-      src_idx = bitReverse(m, log2n);
-      m++;
-    } while (src_idx >= len);
-
-    dest[k] = cmp(src[src_idx]);
-  }
+  for (size_t k = 0; k < len; k++)
+    dest[k] = cmp_dest(src[bitReverse(m, log2n)]);
 
   for (size_t s = 1; s <= log2n; s++) {
     size_t m = 1 << s;
     size_t m2 = m >> 1;
-    cmp w(1, 0);
-    cmp wm = exp(-i * (pi / m2));
+    cmp_dest w(1, 0);
+    cmp_dest wm = exp(-i * (pi / m2));
     for (size_t j = 0; j < m2; ++j) {
       for (size_t k = j; k < len; k += m) {
-        cmp a = dest[k];
-        cmp b = w * dest[k + m2];
+        cmp_dest a = dest[k];
+        cmp_dest b = w * dest[k + m2];
         dest[k] = (a + b) * isqrt2;
         dest[k + m2] = (a - b) * isqrt2;
       }
@@ -150,6 +145,35 @@ void idft(const SrcIter_t src, DstIter_t dest, size_t len) {
   dft(src, buf, len);
   dest[0] = buf[0];
   for (size_t k = 1; k < len; k++) dest[k] = buf[len - k];
+  delete[] buf;
+}
+
+/**
+ * @brief Discrete cosine transform for arbitrary input length
+ *
+ */
+template <class SrcIter_t, class DstIter_t>
+void dct(const SrcIter_t src, DstIter_t dest, size_t len) {
+  typedef typename std::iterator_traits<DstIter_t>::value_type cmp_dest;
+
+  // reorder
+  for (size_t k = 0; k < len / 2 - 1; k++) {
+    dest[k] = src[2 * k];
+    dest[len - 1 - k] = src[2 * k + 1];
+  }
+  if (len % 2 == 1) dest[len / 2] = src[len - 1];
+
+  std::complex<cmp_dest>* buf = new std::complex<cmp_dest>[len];
+  ifft(dest, buf, len);
+
+  dest[0] = 2 * isqrt2 * std::real(buf[0]);
+
+  std::complex<cmp_dest> w(1, 0);
+  std::complex<cmp_dest> wm = exp(i * pi / (2. * len));
+  for (size_t k = 1; k < len; k++) {
+    w *= wm;
+    dest[k] = 2 * std::real(w * buf[k]);
+  }
   delete[] buf;
 }
 
