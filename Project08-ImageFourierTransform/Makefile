@@ -3,7 +3,7 @@ PLOTS=test.pdf
 OUTPUT=test.npy
 
 # 'Debug' or 'Release'
-BUILD_TYPE=Release
+BUILD_TYPE=Debug
 
 GCC_PATH=$(shell which g++)
 
@@ -49,7 +49,7 @@ $(PLOT_PATHS)&: visualize.py $(OUTPUT_PATHS) | build
 $(OUTPUT_PATHS)&: build/$(EXECUTABLE) config.yaml | build
 	build/$(EXECUTABLE)
 
-build/$(EXECUTABLE): FORCE
+build/$(EXECUTABLE): build/Makefile FORCE | build
 #	cmake -DNAME:STRING=$(EXECUTABLE) --build build 
 	$(MAKE) -C build
 

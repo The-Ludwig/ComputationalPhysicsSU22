@@ -157,11 +157,11 @@ void dct(const SrcIter_t src, DstIter_t dest, size_t len) {
   typedef typename std::iterator_traits<DstIter_t>::value_type cmp_dest;
 
   // reorder
-  for (size_t k = 0; k < len / 2 - 1; k++) {
+  for (size_t k = 0; k <= len / 2 - 1; k++) {
     dest[k] = src[2 * k];
     dest[len - 1 - k] = src[2 * k + 1];
   }
-  if (len % 2 == 1) dest[len / 2] = src[len - 1];
+  if (len % 2 == 1) dest[len / 2] = src[len - 2];
 
   std::complex<cmp_dest>* buf = new std::complex<cmp_dest>[len];
   ifft(dest, buf, len);
@@ -175,6 +175,37 @@ void dct(const SrcIter_t src, DstIter_t dest, size_t len) {
     dest[k] = 2 * std::real(w * buf[k]);
   }
   delete[] buf;
+}
+
+/**
+ * @brief Discrete cosine transform for arbitrary input length
+ *
+ */
+template <class SrcIter_t, class DstIter_t>
+void idct(const SrcIter_t src, DstIter_t dest, size_t len) {
+  typedef typename std::iterator_traits<DstIter_t>::value_type cmp_dest;
+
+  // reorder
+  std::complex<cmp_dest>* buf = new std::complex<cmp_dest>[len];
+  buf[0] = src[0] * isqrt2;
+  std::complex<cmp_dest> w(1, 0);
+  std::complex<cmp_dest> wm = exp(i * pi / (2. * len));
+  for (size_t k = 1; k < len; k++) {
+    w *= wm;
+    buf[k] = std::complex<cmp_dest>(src[k]) * w;
+  }
+
+  std::complex<cmp_dest>* buf2 = new std::complex<cmp_dest>[len];
+
+  ifft(buf, buf2, len);
+  for (size_t k = 0; k < len / 2; k++) {
+    dest[2 * k] = std::real(buf2[k]);
+    dest[2 * k + 1] = std::real(buf2[len - 1 - k]);
+  }
+  if (len % 2 == 1) dest[len - 1] = std::real(buf2[len / 2]);
+
+  delete[] buf;
+  delete[] buf2;
 }
 
 #ifndef NDEBUG
@@ -239,11 +270,26 @@ void inverse() {
   for (int i = 0; i < 12; ++i) std::cout << a[i] << "\n";
 }
 
+void dct_test() {
+  std::cout << "dct test" << std::endl;
+  double a[] = {0, 1, 2, 3, 2, 1, 0, 5, 9, 1, 1, -3};
+  double b[12];
+  for (int i = 0; i < 12; ++i) std::cout << a[i] << "\n";
+
+  std::cout << std::endl;
+  dct(a, b, 12);
+  for (int i = 0; i < 12; ++i) std::cout << b[i] << "\n";
+  std::cout << std::endl;
+  idct(b, a, 12);
+  for (int i = 0; i < 12; ++i) std::cout << a[i] << "\n";
+}
+
 void tests() {
   simple();
   prime();
   interesting();
   inverse();
+  dct_test();
 }
 };  // namespace FFT
 #endif

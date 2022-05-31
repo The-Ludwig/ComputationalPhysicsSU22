@@ -154,7 +154,8 @@ The transform is given by
 \end{equation}
 and it's inverse by
 \begin{equation}
-    x_k = \symcal{C}^{-1}\left(\vec X\right)_k =\frac{1}{\sqrt N}\sum_{n=1}^{N-1}c_k X_n \cos \left(\frac{\pi(2k+1)}{2N}\right).
+    x_k = \symcal{C}^{-1}\left(\vec X\right)_k
+    =\frac{1}{\sqrt N}\sum_{n=1}^{N-1}c_n X_n \cos \left(\frac{\pi(2k+1)}{2N}n\right).
 \end{equation}
 \cite{DCT}
 The DCT can be calculated using the DFT. An efficient algorithm for this from \cite{DCTUFFT} first reorders the points to
@@ -170,10 +171,14 @@ to obtain the relation
     \symcal{C}\left(\vec x\right)_k = X_k =2 c_k
     \Re e^{i\pi\frac{k}{2N}}\symcal{F}^{-1}\left(\vec x'\right)_k
 \end{equation}
-and similar it's inverse
+and it's inverse
 \begin{equation}
-    \symcal{C}^{-1}\left(\vec X\right)_{2k} = x_{2k} =
-    \Re \symcal{F}^{-1}\left\{c_lX_le^{i\frac{\pi l}{2N}}\right\}_k.
+    \begin{split}
+        \symcal{C}^{-1}\left(\vec X\right)_{2k} =& x_{2k} =
+        \Re \symcal{F}^{-1}\left\{c_lX_le^{i\frac{\pi l}{2N}}\right\}_k
+        \\
+        &x_{2k+1} = x_{2(N-1-k)}.
+    \end{split}
 \end{equation}
 Note, that we only need to calculate half of the Fourier coefficients, if we make use of
 Equation \eqref{eqn:realFSymmetry}.
