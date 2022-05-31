@@ -20,7 +20,7 @@ class Timer {
   double elapsed_ms() { return elapsed_s() * 1e3; }
 
   /**
-   * @brief Tests how long a function executes on average.
+   * @brief Tests how long a function executes on average in ms.
    *
    * Using the Welfords online algorithm to calculate the mean and standard
    * deviation.

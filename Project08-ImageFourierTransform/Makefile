@@ -1,6 +1,6 @@
 EXECUTABLE=$(shell pwd |  sed -e 's/.*\///' -e 's/\(.*\)/\L\1/' -e 's/project[0-9][0-9]-//')
-PLOTS=test.pdf
-OUTPUT=test.npy
+PLOTS=times_lin.pdf times_p2.pdf
+OUTPUT=times_lin.npy times_p2.npy
 
 # 'Debug' or 'Release'
 BUILD_TYPE=Debug
@@ -46,7 +46,7 @@ build/report.pdf: report.tex $(PLOT_PATHS) | build
 $(PLOT_PATHS)&: visualize.py $(OUTPUT_PATHS) | build
 	python visualize.py
 
-$(OUTPUT_PATHS)&: build/$(EXECUTABLE) config.yaml | build
+$(OUTPUT_PATHS)&: build/$(EXECUTABLE) | build
 	build/$(EXECUTABLE)
 
 build/$(EXECUTABLE): build/Makefile FORCE | build

@@ -1,12 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from yaml import safe_load
+import seaborn as sns
 
-with open("config.yaml") as f:
-    config = safe_load(f)
+sns.set_theme()
+
+lens, means, stds = np.genfromtxt("build/output/times_lin.npy", unpack=True)
+plt.plot(lens, means, "x")
 
 
-x, y = np.genfromtxt(f"build/output/{config['name']}.npy", unpack=True)
+plt.tight_layout()
+plt.savefig("build/plots/times_lin.pdf")
+plt.cla()
 
-plt.plot(x, y)
-plt.savefig(f"build/plots/{config['name']}.pdf")
+lens, means, stds = np.genfromtxt("build/output/times_p2.npy", unpack=True)
+plt.plot(lens, means, "x")
+
+plt.tight_layout()
+plt.savefig("build/plots/times_p2.pdf")

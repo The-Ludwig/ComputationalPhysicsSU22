@@ -240,14 +240,14 @@ void dft(const SrcView& src, DstView& dst_mag, DstView& dst_phase,
         }
         if (log) {
           dst_mag_it[x][c] =
-              (std::log(std::abs(mats[c](xcord, ycord))) - std::log(min)) /
+              (std::log(std::abs(mats[c](ycord, xcord))) - std::log(min)) /
               (std::log(max) - std::log(min)) * max_val;
         } else {
-          dst_mag_it[x][c] = ((std::abs(mats[c](xcord, ycord))) - (min)) /
+          dst_mag_it[x][c] = ((std::abs(mats[c](ycord, xcord))) - (min)) /
                              ((max) - (min)) * max_val;
         }
         dst_phase_it[x][c] =
-            std::arg(mats[c](xcord, ycord)) / 2. / pi * max_val;
+            std::arg(mats[c](ycord, xcord)) / 2. / pi * max_val;
       }
   }
 }
@@ -340,14 +340,18 @@ void to_image(vector<MatrixXcd>& src, DstView& dst) {
 }
 
 void apply_filter(const char* from, const char* to,
-                  std::function<void(MatrixXcd&)> filter) {
+                  std::function<void(MatrixXcd&)> filter, bool gray = false) {
   rgb8_image_t img;
   read_image(from, img, png_tag());
 
   typedef typename channel_type<rgb8_image_t>::type cs_t;
   cs_t max_val = std::numeric_limits<cs_t>::max();
 
-  auto mats = dft(view(img));
+  std::vector<MatrixXcd> mats;
+  if (gray)
+    mats = dft(color_converted_view<gray8_pixel_t>(view(img)));
+  else
+    mats = dft(view(img));
 
   auto w = img.width();
   auto h = img.height();
@@ -377,43 +381,97 @@ void apply_filter(const char* from, const char* to,
     }
   }
 
-  rgb8_image_t sharpened(img.dimensions());
-  to_image(mats, view(sharpened));
+  if (gray) {
+    gray8_image_t sharpened(img.dimensions());
+    to_image(mats, view(sharpened));
 
-  write_view(to, view(sharpened), png_tag());
+    write_view(to, view(sharpened), png_tag());
+  } else {
+    rgb8_image_t sharpened(img.dimensions());
+    to_image(mats, view(sharpened));
+
+    write_view(to, view(sharpened), png_tag());
+  }
 }
 
-void sharpen(const char* from, const char* to, double radius) {
-  apply_filter(from, to, [&](MatrixXcd& mat) {
-    double limit = radius * std::min(mat.cols(), mat.rows()) / 2.;
-    limit *= limit;
-    for (int x = 0; x < mat.cols(); x++)
-      for (int y = 0; y < mat.rows(); y++) {
-        double pos_x =
-            ((x + mat.cols() / 2) % mat.cols()) - (mat.cols() - 1) / 2.;
-        double pos_y =
-            ((y + mat.rows() / 2) % mat.rows()) - (mat.rows() - 1) / 2.;
-        if (pos_x * pos_x + pos_y * pos_y < limit) {
-          mat(y, x) = 0;
-        }
-      }
-  });
+void sharpen(const char* from, const char* to, double radius,
+             bool gray = false) {
+  apply_filter(
+      from, to,
+      [&](MatrixXcd& mat) {
+        double limit = radius * std::min(mat.cols(), mat.rows()) / 2.;
+        limit *= limit;
+        for (int x = 0; x < mat.cols(); x++)
+          for (int y = 0; y < mat.rows(); y++) {
+            double pos_x =
+                ((x + mat.cols() / 2) % mat.cols()) - (mat.cols() - 1) / 2.;
+            double pos_y =
+                ((y + mat.rows() / 2) % mat.rows()) - (mat.rows() - 1) / 2.;
+            if (pos_x * pos_x + pos_y * pos_y < limit) {
+              mat(y, x) = 0;
+            }
+          }
+      },
+      gray);
 }
 
-void blur(const char* from, const char* to, double radius) {
-  apply_filter(from, to, [&](MatrixXcd& mat) {
-    double limit = radius * std::min(mat.cols(), mat.rows()) / 2.;
-    for (int x = 0; x < mat.cols(); x++)
-      for (int y = 0; y < mat.rows(); y++) {
-        double pos_x =
-            ((x + mat.cols() / 2) % mat.cols()) - (mat.cols() - 1) / 2.;
-        double pos_y =
-            ((y + mat.rows() / 2) % mat.rows()) - (mat.rows() - 1) / 2.;
-        if (pos_x * pos_x + pos_y * pos_y > limit * limit) {
-          mat(y, x) = 0;
-        }
-      }
-  });
+void blur(const char* from, const char* to, double radius, bool gray = false) {
+  apply_filter(
+      from, to,
+      [&](MatrixXcd& mat) {
+        double limit = radius * std::min(mat.cols(), mat.rows()) / 2.;
+        for (int x = 0; x < mat.cols(); x++)
+          for (int y = 0; y < mat.rows(); y++) {
+            double pos_x =
+                ((x + mat.cols() / 2) % mat.cols()) - (mat.cols() - 1) / 2.;
+            double pos_y =
+                ((y + mat.rows() / 2) % mat.rows()) - (mat.rows() - 1) / 2.;
+            if (pos_x * pos_x + pos_y * pos_y > limit * limit) {
+              mat(y, x) = 0;
+            }
+          }
+      },
+      gray);
+}
+
+void rect_filter(const char* from, const char* to, double width, double height,
+                 bool gray = false) {
+  apply_filter(
+      from, to,
+      [&](MatrixXcd& mat) {
+        for (int x = 0; x < mat.cols(); x++)
+          for (int y = 0; y < mat.rows(); y++) {
+            double pos_x =
+                ((x + mat.cols() / 2) % mat.cols()) - (mat.cols() - 1) / 2.;
+            double pos_y =
+                ((y + mat.rows() / 2) % mat.rows()) - (mat.rows() - 1) / 2.;
+            if (pos_x > width / 2 || pos_x < -width / 2 || pos_y > height / 2 ||
+                pos_y < -height / 2) {
+              mat(y, x) = 0;
+            }
+          }
+      },
+      gray);
+}
+
+void anti_rect_filter(const char* from, const char* to, double width,
+                      double height, bool gray = false) {
+  apply_filter(
+      from, to,
+      [&](MatrixXcd& mat) {
+        for (int x = 0; x < mat.cols(); x++)
+          for (int y = 0; y < mat.rows(); y++) {
+            double pos_x =
+                ((x + mat.cols() / 2) % mat.cols()) - (mat.cols() - 1) / 2.;
+            double pos_y =
+                ((y + mat.rows() / 2) % mat.rows()) - (mat.rows() - 1) / 2.;
+            if (!(pos_x > width / 2 || pos_x < -width / 2 ||
+                  pos_y > height / 2 || pos_y < -height / 2)) {
+              mat(y, x) = 0;
+            }
+          }
+      },
+      gray);
 }
 
 typedef uint_least16_t pos_t;
