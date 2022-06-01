@@ -46,7 +46,7 @@ vector<Eigen::MatrixXcd> dft(const ImgView& src) {
 
   auto h = src.height();
   auto w = src.width();
-  auto nc = num_channels<ImgView>::value;
+  constexpr auto nc = num_channels<ImgView>::value;
   vector<mattype> dfts;
   dfts.reserve(nc);
   for (size_t k = 0; k < nc; k++) dfts.push_back(mattype(h, w));
@@ -58,11 +58,15 @@ vector<Eigen::MatrixXcd> dft(const ImgView& src) {
     typename ImgView::x_iterator src_it = src.row_begin(y);
     for (size_t c = 0; c < nc; c++) {
       bar.update();
-      auto src_channel_it =
-          channel_iterator<cs_t, typename ImgView::x_iterator>(src_it, c);
       std::vector<complex> buf;
       buf.resize(w);
-      fft(src_channel_it, buf.data(), w);
+      if constexpr (nc == 1) {
+        fft(src_it, buf.data(), w);
+      } else {
+        auto src_channel_it =
+            channel_iterator<cs_t, typename ImgView::x_iterator>(src_it, c);
+        fft(src_channel_it, buf.data(), w);
+      }
       for (int x = 0; x < w; x++) dfts[c](y, x) = buf[x];
     }
   }
@@ -256,8 +260,8 @@ template <typename SrcView, typename DstView>
 void dct(const SrcView& src, DstView& dst) {
   assert(src.dimensions() == dst.dimensions());
 
-  typedef typename channel_type<DstView>::type cs_t;
-  cs_t max_val = std::numeric_limits<cs_t>::max();
+  // typedef typename channel_type<DstView>::type cs_t;
+  // cs_t max_val = std::numeric_limits<cs_t>::max();
 
   auto mats = dct(src);
 
@@ -272,7 +276,7 @@ void dct(const SrcView& src, DstView& dst) {
     typename DstView::x_iterator dst_it = dst.row_begin(y);
     for (int x = 0; x < w; x++)
       for (size_t c = 0; c < mats.size(); c++) {
-        auto [min, max] = limits[c];
+        // auto [min, max] = limits[c];
         dst_it[x][c] = mats[c](y, x);
       }
   }
@@ -323,7 +327,7 @@ void to_image(vector<MatrixXcd>& src, DstView& dst) {
 
   std::vector<std::tuple<double, double>> limits;
   limits.reserve(src.size());
-  for (size_t k = 0; k < src.size(); k++) limits.push_back(real_bounds(src[k]));
+  for (size_t k = 0; k < src.size(); k++) limits.push_back(mag_bounds(src[k]));
 
   auto w = src[0].cols();
   auto h = src[0].rows();
@@ -334,23 +338,53 @@ void to_image(vector<MatrixXcd>& src, DstView& dst) {
       for (size_t c = 0; c < src.size(); c++) {
         auto [min, max] = limits[c];
 
-        dst_it[x][c] = src[c](y, x).real();
+        dst_it[x][c] = std::abs(src[c](y, x)) / max * max_val;
       }
   }
 }
 
-void apply_filter(const char* from, const char* to,
+template <typename DstView>
+void to_image_mag(vector<MatrixXcd>& src, DstView& dst) {
+  assert(src[0].cols() == dst.width());
+  assert(src[0].rows() == dst.height());
+
+  typedef typename channel_type<DstView>::type cs_t;
+  cs_t max_val = std::numeric_limits<cs_t>::max();
+
+  std::vector<std::tuple<double, double>> limits;
+  limits.reserve(src.size());
+  for (size_t k = 0; k < src.size(); k++) limits.push_back(mag_bounds(src[k]));
+
+  auto w = src[0].cols();
+  auto h = src[0].rows();
+
+  for (int y = 0; y < h; y++) {
+    typename DstView::x_iterator dst_it = dst.row_begin(y);
+    for (int x = 0; x < w; x++)
+      for (size_t c = 0; c < src.size(); c++) {
+        auto [min, max] = limits[c];
+
+        auto ycord = (y + h / 2) % h;
+        auto xcord = (x + w / 2) % w;
+        dst_it[x][c] = (std::log(std::abs(src[c](ycord, xcord)) + 1e-6) -
+                        std::log(min + 1e-6)) /
+                       (std::log(max) - std::log(min + 1e-6)) * max_val;
+      }
+  }
+}
+
+void apply_filter(const char* from, const char* to, const char* fs,
                   std::function<void(MatrixXcd&)> filter, bool gray = false) {
   rgb8_image_t img;
   read_image(from, img, png_tag());
 
-  typedef typename channel_type<rgb8_image_t>::type cs_t;
-  cs_t max_val = std::numeric_limits<cs_t>::max();
+  // typedef typename channel_type<rgb8_image_t>::type cs_t;
+  // cs_t max_val = std::numeric_limits<cs_t>::max();
 
   std::vector<MatrixXcd> mats;
-  if (gray)
+  if (gray) {
     mats = dft(color_converted_view<gray8_pixel_t>(view(img)));
-  else
+  } else
     mats = dft(view(img));
 
   auto w = img.width();
@@ -358,6 +392,16 @@ void apply_filter(const char* from, const char* to,
 
   // apply filter
   for (size_t c = 0; c < mats.size(); c++) filter(mats[c]);
+
+  if (gray) {
+    gray8_image_t img_control(img.dimensions());
+    to_image_mag(mats, view(img_control));
+    write_view(fs, view(img_control), png_tag());
+  } else {
+    rgb8_image_t img_control(img.dimensions());
+    to_image_mag(mats, view(img_control));
+    write_view(fs, view(img_control), png_tag());
+  }
 
   // transform back
   // first do fourier traffo of rows
@@ -394,10 +438,10 @@ void apply_filter(const char* from, const char* to,
   }
 }
 
-void sharpen(const char* from, const char* to, double radius,
+void sharpen(const char* from, const char* to, const char* fs, double radius,
              bool gray = false) {
   apply_filter(
-      from, to,
+      from, to, fs,
       [&](MatrixXcd& mat) {
         double limit = radius * std::min(mat.cols(), mat.rows()) / 2.;
         limit *= limit;
@@ -415,9 +459,48 @@ void sharpen(const char* from, const char* to, double radius,
       gray);
 }
 
-void blur(const char* from, const char* to, double radius, bool gray = false) {
+void sharpen_smooth(const char* from, const char* to, const char* fs,
+                    double exp_fac, bool gray = false) {
   apply_filter(
-      from, to,
+      from, to, fs,
+      [&](MatrixXcd& mat) {
+        for (int x = 0; x < mat.cols(); x++)
+          for (int y = 0; y < mat.rows(); y++) {
+            double pos_x =
+                ((x + mat.cols() / 2) % mat.cols()) - (mat.cols() - 1) / 2.;
+            double pos_y =
+                ((y + mat.rows() / 2) % mat.rows()) - (mat.rows() - 1) / 2.;
+
+            double r2 = pos_x * pos_x + pos_y * pos_y;
+            mat(y, x) *= (1 - std::exp(-r2 * exp_fac));
+          }
+      },
+      gray);
+}
+
+void blur_smooth(const char* from, const char* to, const char* fs,
+                 double exp_fac, bool gray = false) {
+  apply_filter(
+      from, to, fs,
+      [&](MatrixXcd& mat) {
+        for (int x = 0; x < mat.cols(); x++)
+          for (int y = 0; y < mat.rows(); y++) {
+            double pos_x =
+                ((x + mat.cols() / 2) % mat.cols()) - (mat.cols() - 1) / 2.;
+            double pos_y =
+                ((y + mat.rows() / 2) % mat.rows()) - (mat.rows() - 1) / 2.;
+
+            double r2 = pos_x * pos_x + pos_y * pos_y;
+            mat(y, x) *= std::exp(-r2 * exp_fac);
+          }
+      },
+      gray);
+}
+
+void blur(const char* from, const char* to, const char* fs, double radius,
+          bool gray = false) {
+  apply_filter(
+      from, to, fs,
       [&](MatrixXcd& mat) {
         double limit = radius * std::min(mat.cols(), mat.rows()) / 2.;
         for (int x = 0; x < mat.cols(); x++)
@@ -434,10 +517,10 @@ void blur(const char* from, const char* to, double radius, bool gray = false) {
       gray);
 }
 
-void rect_filter(const char* from, const char* to, double width, double height,
-                 bool gray = false) {
+void rect_filter(const char* from, const char* to, const char* fs, double width,
+                 double height, bool gray = false) {
   apply_filter(
-      from, to,
+      from, to, fs,
       [&](MatrixXcd& mat) {
         for (int x = 0; x < mat.cols(); x++)
           for (int y = 0; y < mat.rows(); y++) {
@@ -445,8 +528,10 @@ void rect_filter(const char* from, const char* to, double width, double height,
                 ((x + mat.cols() / 2) % mat.cols()) - (mat.cols() - 1) / 2.;
             double pos_y =
                 ((y + mat.rows() / 2) % mat.rows()) - (mat.rows() - 1) / 2.;
-            if (pos_x > width / 2 || pos_x < -width / 2 || pos_y > height / 2 ||
-                pos_y < -height / 2) {
+            if (pos_x > mat.cols() * width / 2 ||
+                pos_x < -mat.cols() * width / 2 ||
+                pos_y > mat.rows() * height / 2 ||
+                pos_y < -mat.rows() * height / 2) {
               mat(y, x) = 0;
             }
           }
@@ -454,10 +539,10 @@ void rect_filter(const char* from, const char* to, double width, double height,
       gray);
 }
 
-void anti_rect_filter(const char* from, const char* to, double width,
-                      double height, bool gray = false) {
+void anti_rect_filter(const char* from, const char* to, const char* fs,
+                      double width, double height, bool gray = false) {
   apply_filter(
-      from, to,
+      from, to, fs,
       [&](MatrixXcd& mat) {
         for (int x = 0; x < mat.cols(); x++)
           for (int y = 0; y < mat.rows(); y++) {
@@ -465,8 +550,10 @@ void anti_rect_filter(const char* from, const char* to, double width,
                 ((x + mat.cols() / 2) % mat.cols()) - (mat.cols() - 1) / 2.;
             double pos_y =
                 ((y + mat.rows() / 2) % mat.rows()) - (mat.rows() - 1) / 2.;
-            if (!(pos_x > width / 2 || pos_x < -width / 2 ||
-                  pos_y > height / 2 || pos_y < -height / 2)) {
+            if (!(pos_x > mat.cols() * width / 2 ||
+                  pos_x < -mat.cols() * width / 2 ||
+                  pos_y > mat.rows() * height / 2 ||
+                  pos_y < -mat.rows() * height / 2)) {
               mat(y, x) = 0;
             }
           }
@@ -484,16 +571,16 @@ void compress_image(const char* from, const char* to,
   std::cout << "Image read! Dimensions x: " << img.dimensions().x
             << " y: " << img.dimensions().y << std::endl;
 
-  typedef typename channel_type<rgb8_image_t>::type cs_t;
-  cs_t max_val = std::numeric_limits<cs_t>::max();
+  // typedef typename channel_type<rgb8_image_t>::type cs_t;
+  // cs_t max_val = std::numeric_limits<cs_t>::max();
 
   auto mats = dct(view(img));
   // x, y, c
   std::vector<index_t> indices;
 
   indices.reserve(mats[0].cols() * mats[0].rows() * mats.size());
-  for (size_t x = 0; x < mats[0].cols(); x++)
-    for (size_t y = 0; y < mats[0].rows(); y++)
+  for (Eigen::Index x = 0; x < mats[0].cols(); x++)
+    for (Eigen::Index y = 0; y < mats[0].rows(); y++)
       for (size_t c = 0; c < mats.size(); c++) indices.push_back({x, y, c});
 
   std::sort(indices.begin(), indices.end(),
@@ -573,8 +660,8 @@ void decompress_image(const char* from, const char* to) {
   }
 
   rgb8_image_t img(width, height);
-  typedef typename channel_type<rgb8_image_t>::type cs_t;
-  cs_t max_val = std::numeric_limits<cs_t>::max();
+  // typedef typename channel_type<rgb8_image_t>::type cs_t;
+  // cs_t max_val = std::numeric_limits<cs_t>::max();
   auto img_view = view(img);
 
   // now of cols
@@ -716,8 +803,10 @@ void image_test() {
 }
 
 void sharpen_test() {
-  sharpen("images/dune.png", "build/output/dune_sharp.png", .1);
-  blur("images/dune.png", "build/output/dune_blur.png", .5);
+  sharpen("images/dune.png", "build/output/dune_sharp.png",
+          "build/output/dune_sharp_mask.png", .1);
+  blur("images/dune.png", "build/output/dune_blur.png",
+       "build/output/dune_blur_mask.png", .5);
 }
 
 void compress_test() {

@@ -1,0 +1,134 @@
+%\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+%\renewcommand*\footnoterule{\color{lhcb3}\rule{8cm}{.2mm}}
+\setbeamersize{text margin left=4mm,text margin right=10mm}
+\settowidth{\leftmargini}{\usebeamertemplate{itemize item}}
+\addtolength{\leftmargini}{\labelsep}
+\AtBeginEnvironment{frame}{\setcounter{footnote}{0}}
+%\setbeamercolor{title separator}{fg=lhcb3, bg=lhcb3}
+%\setbeamercolor{structure}{fg=lhcb3, bg=lhcb3}
+%\setbeamercolor{page number in head/foot}{fg=lhcb3, bg=lhcb3}
+%\usetikz{}
+
+\usepackage{fontspec}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+
+%Physics styles
+\usepackage[
+    math-style=ISO,
+    bold-style=ISO,
+    sans-style=italic,
+    nabla=upright,
+    partial=upright
+]{unicode-math}
+
+% numbers and units
+\usepackage[
+    %   locale=DE,
+    separate-uncertainty=true,  % use \pm
+    per-mode=symbol-or-fraction,
+    binary-units=true,
+    %per-mode=reciprocal,
+    %output-decimal-marker=.,
+]{siunitx}
+
+% Fix missing micro sign with TL2017
+\sisetup{
+    math-micro=\text{μ},
+    text-micro=μ,
+    range-phrase = -,
+    list-separator       = {, },
+    list-final-separator = { und },
+    range-units = single
+}
+
+% Positioning
+\usepackage{float}
+% Floats inside of section 
+\usepackage[section, below]{placeins}
+% same for Subsections 
+\makeatletter
+\AtBeginDocument{%
+    \expandafter\renewcommand\expandafter\subsection\expandafter{%
+        \expandafter\@fb@secFB\subsection
+    }%
+}
+\makeatother
+\floatplacement{figure}{htbp}
+\floatplacement{table}{htbp}
+
+% making caption look nice
+\usepackage[
+    labelfont=bf,
+    font=small,
+    width=0.9\textwidth,
+]{caption}
+\usepackage{subcaption}
+
+% pictures
+\usepackage{graphicx}
+
+% Use _ in paths
+\usepackage{grffile}
+
+% tables
+\usepackage{booktabs}
+
+% optimizing look
+\usepackage{microtype}
+\usepackage[shortcuts]{extdash}
+
+\usepackage{tikz}
+\usepackage{tikz-feynman}
+\usepackage{tikz-3dplot}
+
+\setmainfont{Libertinus Serif}
+\setsansfont{Libertinus Sans}
+\setmonofont{Libertinus Mono}
+\setmathfont{Libertinus Math}
+\DeclareMathAlphabet{\mathcal}{OMS}{cmsy}{m}{n}
+
+\usepackage[
+    backend=biber,   % use modern biber backend
+    autolang=hyphen, % load hyphenation rules for if language of bibentry is not
+    % german, has to be loaded with \setotherlanguages
+    % in the references.bib use langid={en} for english sources
+    urldate=iso,%
+    date=iso,%
+    style=phys,%
+    articletitle=false,biblabel=brackets,%
+    chaptertitle=false,pageranges=false,%
+    maxnames=2%
+]{biblatex}
+
+\usepackage{todonotes}
+\presetkeys{todonotes}{inline}{}
+%\setuptodonotes{color=lhcb3,size=\tiny}
+\usepackage{xfrac}
+
+\usetikzlibrary{patterns}
+\usetikzlibrary{angles}
+\usepackage{tabularx}
+
+% quotation marks
+\usepackage{csquotes}
+\usepackage{slashed}
+\usepackage{expl3}
+\usepackage{xparse}
+\usepackage{xcolor}
+\usepackage{ifthen}
+\usepackage{mleftright}
+% my makros
+\input{macros.tex}
+
+% Hyperlinks
+\hypersetup{
+    allbordercolors = vertexDarkGreen,
+    unicode,        % Unicode in PDF-Attributen erlauben
+    pdfusetitle,    % Titel, Autoren und Datum als PDF-Attribute
+    pdfcreator={},  % ┐ PDF-Attribute säubern
+    pdfproducer={}, % ┘
+}
+% erweiterte Bookmarks im PDF
+\usepackage{bookmark}

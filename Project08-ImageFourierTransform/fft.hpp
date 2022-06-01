@@ -92,7 +92,7 @@ void fft(const SrcIter_t src, DstIter_t dest, size_t len) {
   typedef typename std::iterator_traits<DstIter_t>::value_type cmp_dest;
 
   size_t log2n = 0;
-  while (((len >> ++log2n) & 1) == 0) {
+  while (((len >> log2n++) & 1) == 0) {
   };
   log2n--;
 

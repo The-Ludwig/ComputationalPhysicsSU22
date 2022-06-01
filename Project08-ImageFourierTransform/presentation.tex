@@ -1,0 +1,40 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% if you want this to be a beamer project
+% just rename this file to `main.tex` and
+% and delete the original `main.tex`
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[aspectratio=169]{beamer}
+\input{header_beamer.tex} % look in there for more beamer settings 
+\usetheme{metropolis} % Use metropolis theme
+
+% Set language here
+\usepackage[english]{babel}
+
+\title{Discrete Fourier Transform of Images}
+\date{\today}
+\author{Ludwig Neste}
+\institute{\colorbox{mDarkTeal}{\includegraphics[width=.3\textwidth]{su_logo.pdf}}}
+
+\addbibresource{references.bib}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% \begin{frame}{Table of Contents}
+%   \setbeamertemplate{section in toc}[sections numbered]
+%   \tableofcontents[hideallsubsections]
+% \end{frame}
+
+\input{presentation/intro.tex}
+\input{presentation/results.tex}
+
+\begin{frame}
+  \nocite{*}
+  \printbibliography
+\end{frame}
+
+\end{document}
+

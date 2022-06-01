@@ -43,8 +43,8 @@ class Timer {
       double old_mean = mean;
       mean += (lap_time - mean) / double(n);
       S += (lap_time - mean) * (lap_time - old_mean);
-    } while (n < 10 || std::sqrt(S / (n * n) > precision));
+    } while (n < 10 || std::sqrt(S / ((n - 1) * n)) > precision);
 
-    return {mean, std::sqrt(S / (n - 1))};
+    return {mean, std::sqrt(S / (n - 1) / n)};
   }
 };

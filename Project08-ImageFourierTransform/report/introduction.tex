@@ -116,11 +116,11 @@ the points.
 
 As with the FT, the DFT is easily enlarged to more dimensions
 \begin{equation}
-    X_{l,m,n} = \frac{1}{\sqrt{N_1N_2N_3}}\sum_{i=0}^{N_1-1}\sum_{j=0}^{N_2-1}\sum_{k=0}^{N_3-1} x_{i,j,k} e^{-i{2\pi}\ \left(\!\frac{li}{N_1}+\frac{mj}{N_2}+\frac{nk}{N_3}\right)}.
+    X_{l,m} = \frac{1}{\sqrt{N_1N_2}}\sum_{j=0}^{N_1-1}\sum_{l=0}^{N_2-1}x_{j,l} \ e^{-i{2\pi}\ \left(\!\frac{lj}{N_1}+\frac{ml}{N_2}\right)}.
 \end{equation}
 and the inverse
 \begin{equation}
-    x_{l,m,n} = \frac{1}{\sqrt{N_1N_2N_3}}\sum_{i=0}^{N_1-1}\sum_{j=0}^{N_2-1}\sum_{k=0}^{N_3-1} X_{i,j,k} e^{i{2\pi}\ \left(\!\frac{li}{N_1}+\frac{mj}{N_2}+\frac{nk}{N_3}\right)}.
+    x_{l,m} = \frac{1}{\sqrt{N_1N_2}}\sum_{j=0}^{N_1-1}\sum_{l=0}^{N_2-1} X_{j,l} \e^{i{2\pi}\ \left(\!\frac{lj}{N_1}+\frac{ml}{N_2}\right)}.
 \end{equation}
 I chose the three-dimensional example here, since we are going to look at images with a color channel, which is three dimensional data.
 Other dimensionalities are analogous.
@@ -131,13 +131,13 @@ An image will only contain real numbered input values. This yields the following
     X_{l,m,n} = X^*_{N_1-l,N_2-m,N_3-m}.
     \label{eqn:realFSymmetry}
 \end{equation}
-On the one hand, this is a very useful result: If we transform an image consisting of $N=N_1N_2N_3$ real numbers,
-we do not want to end up with $N$ complex or $2N$ real numbers.
+On the one hand, this is a very useful result: If we transform an image consisting of $N$ real numbers,
+we do not want to end up with $N$ complex (or equivalently $2N$ real) numbers.
 On the other hand this poses a challenge in displaying the transformed image.
 Usually we can only display the magnitude of the transformed image.
 
 Since it seems quite artificial to introduce complex numbers in a problem only consisting of real numbers,
-for image processing usually a very closely related transform is used, the \emph{Discrete Cosine Transfrom (DCT)}.
+for image compression usually a very closely related transform is used, the \emph{Discrete Cosine Transfrom (DCT)}.
 It transforms $N$ real-valued input numbers to $N$ real-valued output numbers.
 The transform is given by
 \begin{equation}
@@ -255,10 +255,29 @@ symmetry of star-pictures.
 This can be removed from images through image editing in Fourier-space.
 
 Another application is the lossy compression of images, sound and other media types.
-An image can be for example saved by performing a Fourier transform and discarding the lowest amplitudes and just
-saving the rest. This is what (among other tricks) the \texttt{.jpg} image format does.
+An image can be for example saved by performing a DCT, reducing the amount
+of different points by quantizing in the frequency space.
+This is what (among other tricks) the \texttt{.jpg} image format does.
 
 Images can also be enhanced with Fourier transform. Assume for example we take a photograph through an insect-net.
 We will have periodic information overlaying the picture. This can be easily removed in Fourier space.
-And by removing high-frequencies the sharpness can be increased.
+Generally, a lot of interesting edits can be performed in Fourier space, having complex outcome in real space.
+And by removing high-frequencies the sharpness can be increased and by doing the inverse the image will be blurred.
 
+
+\subsection{Code}
+The code which produced the results is written in \texttt{C++}.
+No numerical algorithms outside the standard template library were used, which
+means I implemented a version of the FFT and DCT myself.
+The code makes full use of every prime factor of $2$ in the number of transformed points,
+but not the full powered Tukey-Cooley algorithm, since an efficient implementation of that
+requires complicated reordering of the input numbers.
+The used algorithm can handle arbitrary length input data, which makes it
+more general than most implementations found online, since they are usually only implemented
+for powers of 2.
+Nonetheless, the implementation should be viewed more as a toy-implementation for testing
+and can't compete with industry-grade optimized algorithms.
+
+The images in the Fourier space were represented by complex matrices from the \texttt{Eigen}
+library.
+To handle images, as well as image-input and -output the Boost Generic Image Library \texttt{Boost::GIL} was used.

@@ -1,13 +1,13 @@
 # LaTex support
 text.usetex               : True
 font.family               : libertinus
-figure.figsize            : 3, 3
+figure.figsize            : 4.5, 3
 
 # Custom decimal separator (based on locale)
 axes.formatter.use_locale : False
 
 # Optional style for nicer plots :)
-legend.fontsize           : 16
-legend.numpoints          : 1
-legend.handlelength       : 1.5
-legend.frameon            : False
+#legend.fontsize           : 16
+#legend.numpoints          : 1
+#legend.handlelength       : 1.5
+#legend.frameon            : False

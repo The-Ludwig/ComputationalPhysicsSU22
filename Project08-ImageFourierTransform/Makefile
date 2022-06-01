@@ -1,9 +1,9 @@
 EXECUTABLE=$(shell pwd |  sed -e 's/.*\///' -e 's/\(.*\)/\L\1/' -e 's/project[0-9][0-9]-//')
-PLOTS=times_lin.pdf times_p2.pdf
+PLOTS=times_lin.pdf times_p2.pdf 
 OUTPUT=times_lin.npy times_p2.npy
 
 # 'Debug' or 'Release'
-BUILD_TYPE=Debug
+BUILD_TYPE=Release
 
 GCC_PATH=$(shell which g++)
 
@@ -17,7 +17,7 @@ $(info g++=$(GCC_PATH))
 
 .PHONY: all build FORCE clean
 
-all: build/exercise.zip
+all: build/exercise.zip build/presentation.pdf
 
 build/exercise.zip: build/report.pdf | build
 	cp build/report.pdf report.pdf
@@ -40,7 +40,16 @@ TEXPREFIX = TEXINPUTS=build: \
 work: FORCE | build
 	$(TEXPREFIX) latexmk -pvc $(TEXOPTIONS) report.tex
 
-build/report.pdf: report.tex $(PLOT_PATHS) | build
+presentation: FORCE | build
+	$(TEXPREFIX) latexmk -pvc $(TEXOPTIONS) presentation.tex
+
+build/presentation.pdf: presentation.tex $(PLOT_PATHS) build/plots/hole_dft.png | build
+	$(TEXPREFIX) latexmk $(TEXOPTIONS) presentation.tex
+
+build/plots/hole_dft.png: build/img_dft | build
+	./fft_all_images.bash
+
+build/report.pdf: report.tex $(PLOT_PATHS) build/plots/hole_dft.png| build
 	$(TEXPREFIX) latexmk $(TEXOPTIONS) report.tex
 
 $(PLOT_PATHS)&: visualize.py $(OUTPUT_PATHS) | build
@@ -49,7 +58,7 @@ $(PLOT_PATHS)&: visualize.py $(OUTPUT_PATHS) | build
 $(OUTPUT_PATHS)&: build/$(EXECUTABLE) | build
 	build/$(EXECUTABLE)
 
-build/$(EXECUTABLE): build/Makefile FORCE | build
+build/$(EXECUTABLE) build/img_dft: build/Makefile FORCE | build
 #	cmake -DNAME:STRING=$(EXECUTABLE) --build build 
 	$(MAKE) -C build
 
