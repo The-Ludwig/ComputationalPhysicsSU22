@@ -84,121 +84,152 @@ int main(int argc, char const* argv[]) {
   decompress_image("build/output/A2.ldw", "build/plots/A2.png");
   decompress_image("build/output/A1.ldw", "build/plots/A1.png");
 
-  compress_image("images/dune.png", "build/output/dune8.ldw", 0.9);
-  compress_image("images/dune.png", "build/output/dune5.ldw", 0.5);
-  compress_image("images/dune.png", "build/output/dune1.ldw", 0.1);
-  decompress_image("build/output/dune5.ldw", "build/plots/dune9.png");
-  decompress_image("build/output/dune5.ldw", "build/plots/dune5.png");
-  decompress_image("build/output/dune1.ldw", "build/plots/dune1.png");
+  blur("images/dune.png", "build/output/dune_blur1.png",
+       "build/output/dune_blur1_mask.png", .1);
+  blur("images/dune.png", "build/output/dune_blur2.png",
+       "build/output/dune_blur2_mask.png", .2);
+  blur("images/dune.png", "build/output/dune_blur4.png",
+       "build/output/dune_blur4_mask.png", .4);
+  blur("images/dune.png", "build/output/dune_blur3.png",
+       "build/output/dune_blur3_mask.png", .3);
 
-  sharpen("images/blackhole.png", "build/plots/blackhole001_bw.png",
-          "build/plots/blackhole001_bw_mask.png", .001, true);
-  sharpen("images/blackhole.png", "build/plots/blackhole05_bw.png",
-          "build/plots/blackhole01_bw_mask.png", .01, true);
-  sharpen("images/blackhole.png", "build/plots/blackhole01_bw.png",
-          "build/plots/blackhole01_bw_mask.png", .01, true);
-  sharpen("images/blackhole.png", "build/plots/blackhole0_bw.png",
-          "build/plots/blackhole0_bw_mask.png", .0, true);
+  blur_smooth("images/dune.png", "build/output/dune_blur_smooth.png",
+              "build/output/dune_blur_smooth_mask.png", .001);
 
-  sharpen("images/dune.png", "build/plots/dune_bw_sharp.png",
-          "build/plots/dune_bw_sharp_mask.png", .005, true);
-  blur("images/dune.png", "build/plots/dune_bw_blur.png",
-       "build/plots/dune_bw_blur_mask.png", .95, true);
-  sharpen("images/dune.png", "build/plots/dune_bw.png",
-          "build/plots/dune_bw_mask.png", 0, true);
+  rect_filter("images/dune.png", "build/output/dune_blur_rect.png",
+              "build/output/dune_rect_mask.png", .1, .1);
 
-  rect_filter("images/dune.png", "build/plots/dune_bw_rect.png",
-              "build/plots/dune_bw_rect_mask.png", .5, .5, true);
-  anti_rect_filter("images/dune.png", "build/plots/dune_bw_arect.png",
-                   "build/plots/dune_bw_arect_mask.png", .05, .05, true);
+  sharpen("images/blackhole.png", "build/output/blackhole_sharp9.png",
+          "build/output/blackhole_sharp9_mask.png", .09);
+  sharpen("images/blackhole.png", "build/output/blackhole_sharp6.png",
+          "build/output/blackhole_sharp6_mask.png", .06);
+  sharpen("images/blackhole.png", "build/output/blackhole_sharp3.png",
+          "build/output/blackhole_sharp3_mask.png", .03);
+  sharpen("images/blackhole.png", "build/output/blackhole_sharp1.png",
+          "build/output/blackhole_sharp1_mask.png", .01);
 
-  blur("images/A.png", "build/plots/A_blur95.png",
-       "build/plots/A_blur95_mask.png", .95);
-  blur("images/A.png", "build/plots/A_blur9.png",
-       "build/plots/A_blur9_mask.png", .9);
-  blur("images/A.png", "build/plots/A_blur8.png",
-       "build/plots/A_blur8_mask.png", .8);
-  blur("images/A.png", "build/plots/A_blur7.png",
-       "build/plots/A_blur7_mask.png", .7);
-  blur("images/A.png", "build/plots/A_blur6.png",
-       "build/plots/A_blur6_mask.png", .6);
-  blur("images/A.png", "build/plots/A_blur5.png",
-       "build/plots/A_blur5_mask.png", .5);
-  blur("images/A.png", "build/plots/A_blur4.png",
-       "build/plots/A_blur4_mask.png", .4);
-  blur("images/A.png", "build/plots/A_blur3.png",
-       "build/plots/A_blur3_mask.png", .3);
-  blur("images/A.png", "build/plots/A_blur2.png",
-       "build/plots/A_blur2_mask.png", .2);
-  blur("images/A.png", "build/plots/A_blur1.png",
-       "build/plots/A_blur1_mask.png", .1);
+  sharpen_smooth("images/blackhole.png",
+                 "build/output/blackhole_sharp_smooth_g.png",
+                 "build/output/blackhole_sharp_smooth_mask_g.png", .01, true);
+  sharpen_smooth("images/blackhole.png",
+                 "build/output/blackhole_sharp_smooth.png",
+                 "build/output/blackhole_sharp_smooth_mask.png", .01, false);
 
-  sharpen("images/A.png", "build/plots/A_sharpen95.png",
-          "build/plots/A_sharpen95_mask.png", .95);
-  sharpen("images/A.png", "build/plots/A_sharpen9.png",
-          "build/plots/A_sharpen9_mask.png", .9);
-  sharpen("images/A.png", "build/plots/A_sharpen8.png",
-          "build/plots/A_sharpen8_mask.png", .8);
-  sharpen("images/A.png", "build/plots/A_sharpen7.png",
-          "build/plots/A_sharpen7_mask.png", .7);
-  sharpen("images/A.png", "build/plots/A_sharpen6.png",
-          "build/plots/A_sharpen6_mask.png", .6);
-  sharpen("images/A.png", "build/plots/A_sharpen5.png",
-          "build/plots/A_sharpen5_mask.png", .5);
-  sharpen("images/A.png", "build/plots/A_sharpen4.png",
-          "build/plots/A_sharpen4_mask.png", .4);
-  sharpen("images/A.png", "build/plots/A_sharpen3.png",
-          "build/plots/A_sharpen3_mask.png", .3);
-  sharpen("images/A.png", "build/plots/A_sharpen2.png",
-          "build/plots/A_sharpen2_mask.png", .2);
-  sharpen("images/A.png", "build/plots/A_sharpen1.png",
-          "build/plots/A_sharpen1_mask.png", .1);
+  // compress_image("images/dune.png", "build/output/dune8.ldw", 0.9);
+  // compress_image("images/dune.png", "build/output/dune5.ldw", 0.5);
+  // compress_image("images/dune.png", "build/output/dune1.ldw", 0.1);
+  // decompress_image("build/output/dune5.ldw", "build/plots/dune9.png");
+  // decompress_image("build/output/dune5.ldw", "build/plots/dune5.png");
+  // decompress_image("build/output/dune1.ldw", "build/plots/dune1.png");
 
-  rect_filter("images/A.png", "build/plots/A_blur_rect95.png",
-              "build/plots/A_blur_rect95_mask.png", .95, .95);
-  rect_filter("images/A.png", "build/plots/A_blur_rect9.png",
-              "build/plots/A_blur_rect9_mask.png", .9, .9);
-  rect_filter("images/A.png", "build/plots/A_blur_rect8.png",
-              "build/plots/A_blur_rect8_mask.png", .8, .8);
-  rect_filter("images/A.png", "build/plots/A_blur_rect7.png",
-              "build/plots/A_blur_rect7_mask.png", .7, .7);
-  rect_filter("images/A.png", "build/plots/A_blur_rect6.png",
-              "build/plots/A_blur_rect6_mask.png", .6, .6);
-  rect_filter("images/A.png", "build/plots/A_blur_rect5.png",
-              "build/plots/A_blur_rect5_mask.png", .5, .5);
-  rect_filter("images/A.png", "build/plots/A_blur_rect4.png",
-              "build/plots/A_blur_rect4_mask.png", .4, .4);
-  rect_filter("images/A.png", "build/plots/A_blur_rect3.png",
-              "build/plots/A_blur_rect3_mask.png", .3, .3);
-  rect_filter("images/A.png", "build/plots/A_blur_rect2.png",
-              "build/plots/A_blur_rect2_mask.png", .2, .2);
-  rect_filter("images/A.png", "build/plots/A_blur_rect1.png",
-              "build/plots/A_blur_rect1_mask.png", .1, .1);
+  //   sharpen("images/blackhole.png", "build/plots/blackhole001_bw.png",
+  //           "build/plots/blackhole001_bw_mask.png", .001, true);
+  //   sharpen("images/blackhole.png", "build/plots/blackhole05_bw.png",
+  //           "build/plots/blackhole01_bw_mask.png", .01, true);
+  //   sharpen("images/blackhole.png", "build/plots/blackhole01_bw.png",
+  //           "build/plots/blackhole01_bw_mask.png", .01, true);
+  //   sharpen("images/blackhole.png", "build/plots/blackhole0_bw.png",
+  //           "build/plots/blackhole0_bw_mask.png", .0, true);
 
-  anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect95.png",
-                   "build/plots/A_blur_anti_rect95_mask.png", .95, .95);
-  anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect9.png",
-                   "build/plots/A_blur_anti_rect9_mask.png", .9, .9);
-  anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect8.png",
-                   "build/plots/A_blur_anti_rect8_mask.png", .8, .8);
-  anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect7.png",
-                   "build/plots/A_blur_anti_rect7_mask.png", .7, .7);
-  anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect6.png",
-                   "build/plots/A_blur_anti_rect6_mask.png", .6, .6);
-  anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect5.png",
-                   "build/plots/A_blur_anti_rect5_mask.png", .5, .5);
-  anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect4.png",
-                   "build/plots/A_blur_anti_rect4_mask.png", .4, .4);
-  anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect3.png",
-                   "build/plots/A_blur_anti_rect3_mask.png", .3, .3);
-  anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect2.png",
-                   "build/plots/A_blur_anti_rect2_mask.png", .2, .2);
-  anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect1.png",
-                   "build/plots/A_blur_anti_rect1_mask.png", .1, .1);
+  //   sharpen("images/dune.png", "build/plots/dune_bw_sharp.png",
+  //           "build/plots/dune_bw_sharp_mask.png", .005, true);
+  //   blur("images/dune.png", "build/plots/dune_bw_blur.png",
+  //        "build/plots/dune_bw_blur_mask.png", .95, true);
+  //   sharpen("images/dune.png", "build/plots/dune_bw.png",
+  //           "build/plots/dune_bw_mask.png", 0, true);
 
-  sharpen("images/boy.png", "build/plots/boy.png",
-          "build/plots/boy_control.png", .05);
+  //   rect_filter("images/dune.png", "build/plots/dune_bw_rect.png",
+  //               "build/plots/dune_bw_rect_mask.png", .5, .5, true);
+  //   anti_rect_filter("images/dune.png", "build/plots/dune_bw_arect.png",
+  //                    "build/plots/dune_bw_arect_mask.png", .05, .05, true);
 
-  sharpen_smooth("images/boy.png", "build/plots/boy_smooth.png",
-                 "build/plots/boy_control_smooth.png", .001);
+  //   blur("images/A.png", "build/plots/A_blur95.png",
+  //        "build/plots/A_blur95_mask.png", .95);
+  //   blur("images/A.png", "build/plots/A_blur9.png",
+  //        "build/plots/A_blur9_mask.png", .9);
+  //   blur("images/A.png", "build/plots/A_blur8.png",
+  //        "build/plots/A_blur8_mask.png", .8);
+  //   blur("images/A.png", "build/plots/A_blur7.png",
+  //        "build/plots/A_blur7_mask.png", .7);
+  //   blur("images/A.png", "build/plots/A_blur6.png",
+  //        "build/plots/A_blur6_mask.png", .6);
+  //   blur("images/A.png", "build/plots/A_blur5.png",
+  //        "build/plots/A_blur5_mask.png", .5);
+  //   blur("images/A.png", "build/plots/A_blur4.png",
+  //        "build/plots/A_blur4_mask.png", .4);
+  //   blur("images/A.png", "build/plots/A_blur3.png",
+  //        "build/plots/A_blur3_mask.png", .3);
+  //   blur("images/A.png", "build/plots/A_blur2.png",
+  //        "build/plots/A_blur2_mask.png", .2);
+  //   blur("images/A.png", "build/plots/A_blur1.png",
+  //        "build/plots/A_blur1_mask.png", .1);
+
+  //   sharpen("images/A.png", "build/plots/A_sharpen95.png",
+  //           "build/plots/A_sharpen95_mask.png", .95);
+  //   sharpen("images/A.png", "build/plots/A_sharpen9.png",
+  //           "build/plots/A_sharpen9_mask.png", .9);
+  //   sharpen("images/A.png", "build/plots/A_sharpen8.png",
+  //           "build/plots/A_sharpen8_mask.png", .8);
+  //   sharpen("images/A.png", "build/plots/A_sharpen7.png",
+  //           "build/plots/A_sharpen7_mask.png", .7);
+  //   sharpen("images/A.png", "build/plots/A_sharpen6.png",
+  //           "build/plots/A_sharpen6_mask.png", .6);
+  //   sharpen("images/A.png", "build/plots/A_sharpen5.png",
+  //           "build/plots/A_sharpen5_mask.png", .5);
+  //   sharpen("images/A.png", "build/plots/A_sharpen4.png",
+  //           "build/plots/A_sharpen4_mask.png", .4);
+  //   sharpen("images/A.png", "build/plots/A_sharpen3.png",
+  //           "build/plots/A_sharpen3_mask.png", .3);
+  //   sharpen("images/A.png", "build/plots/A_sharpen2.png",
+  //           "build/plots/A_sharpen2_mask.png", .2);
+  //   sharpen("images/A.png", "build/plots/A_sharpen1.png",
+  //           "build/plots/A_sharpen1_mask.png", .1);
+
+  //   rect_filter("images/A.png", "build/plots/A_blur_rect95.png",
+  //               "build/plots/A_blur_rect95_mask.png", .95, .95);
+  //   rect_filter("images/A.png", "build/plots/A_blur_rect9.png",
+  //               "build/plots/A_blur_rect9_mask.png", .9, .9);
+  //   rect_filter("images/A.png", "build/plots/A_blur_rect8.png",
+  //               "build/plots/A_blur_rect8_mask.png", .8, .8);
+  //   rect_filter("images/A.png", "build/plots/A_blur_rect7.png",
+  //               "build/plots/A_blur_rect7_mask.png", .7, .7);
+  //   rect_filter("images/A.png", "build/plots/A_blur_rect6.png",
+  //               "build/plots/A_blur_rect6_mask.png", .6, .6);
+  //   rect_filter("images/A.png", "build/plots/A_blur_rect5.png",
+  //               "build/plots/A_blur_rect5_mask.png", .5, .5);
+  //   rect_filter("images/A.png", "build/plots/A_blur_rect4.png",
+  //               "build/plots/A_blur_rect4_mask.png", .4, .4);
+  //   rect_filter("images/A.png", "build/plots/A_blur_rect3.png",
+  //               "build/plots/A_blur_rect3_mask.png", .3, .3);
+  //   rect_filter("images/A.png", "build/plots/A_blur_rect2.png",
+  //               "build/plots/A_blur_rect2_mask.png", .2, .2);
+  //   rect_filter("images/A.png", "build/plots/A_blur_rect1.png",
+  //               "build/plots/A_blur_rect1_mask.png", .1, .1);
+
+  //   anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect95.png",
+  //                    "build/plots/A_blur_anti_rect95_mask.png", .95, .95);
+  //   anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect9.png",
+  //                    "build/plots/A_blur_anti_rect9_mask.png", .9, .9);
+  //   anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect8.png",
+  //                    "build/plots/A_blur_anti_rect8_mask.png", .8, .8);
+  //   anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect7.png",
+  //                    "build/plots/A_blur_anti_rect7_mask.png", .7, .7);
+  //   anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect6.png",
+  //                    "build/plots/A_blur_anti_rect6_mask.png", .6, .6);
+  //   anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect5.png",
+  //                    "build/plots/A_blur_anti_rect5_mask.png", .5, .5);
+  //   anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect4.png",
+  //                    "build/plots/A_blur_anti_rect4_mask.png", .4, .4);
+  //   anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect3.png",
+  //                    "build/plots/A_blur_anti_rect3_mask.png", .3, .3);
+  //   anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect2.png",
+  //                    "build/plots/A_blur_anti_rect2_mask.png", .2, .2);
+  //   anti_rect_filter("images/A.png", "build/plots/A_blur_anti_rect1.png",
+  //                    "build/plots/A_blur_anti_rect1_mask.png", .1, .1);
+
+  //   sharpen("images/boy.png", "build/plots/boy.png",
+  //           "build/plots/boy_control.png", .05);
+
+  //   sharpen_smooth("images/boy.png", "build/plots/boy_smooth.png",
+  //                  "build/plots/boy_control_smooth.png", .001);
 }

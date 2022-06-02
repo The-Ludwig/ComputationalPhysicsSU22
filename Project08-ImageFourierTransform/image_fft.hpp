@@ -632,7 +632,6 @@ void decompress_image(const char* from, const char* to) {
   uint_least16_t width, height;
   is.read(reinterpret_cast<char*>(&width), sizeof width);
   is.read(reinterpret_cast<char*>(&height), sizeof height);
-
   std::vector<MatrixXd> mats;
   for (int c = 0; c < 3; c++) mats.push_back(MatrixXd::Zero(height, width));
 

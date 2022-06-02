@@ -134,7 +134,7 @@
         \item If $N=2^p$, complexity is reduced via "Divide and Conquer" to $\symcal{O}(N\log N)$.
         \item One of the most important algorithms for modern signal processing
         \item Rediscovered and popularized by Cooley and Tukey in 1965\footnote{\fullcite{CTAlg}}
-        \item Described in notes of Gauss 160(!) earlier
+        \item Described in notes of Gauss 160 years(!) earlier
     \end{itemize}
 \end{frame}
 \begin{frame}{FFT of arbitrary size?}
@@ -148,36 +148,4 @@
         a\circ b = a\cdot b\quad \symup{mod}\ N
     \end{equation*}
     DFT can then be expressed as a convolution. \emph{Rader's} Algorithm uses this to achieve $\symcal{O}(N\log N)$
-\end{frame}
-\begin{frame}{DCT}
-    Let's stay real!
-    \begin{align*}
-        X_k =\frac{2c_k}{\sqrt N}\sum_{n=0}^{N-1}x_n \cos \left(\frac{\pi\left(2n+1\right)k}{2N} \right)
-        \qquad \leftrightarrow & \qquad
-        x_k
-        =\frac{1}{\sqrt N}\sum_{n=1}^{N-1}c_n X_n \cos \left(\frac{\pi(2k+1)}{2N}n\right)
-        \\
-        \text{where }
-        c_k =                  &
-        \begin{cases}
-            \frac{1}{\sqrt{2}} \quad & k=0           \\
-            1                        & \text{ else }
-        \end{cases}
-    \end{align*}
-    An efficient algorithm based on FFT\footnote{\fullcite{DCTUFFT}}:
-    \begin{align*}
-        \begin{rcases}
-            x'_k       & = x_{2k}  \\
-            x'_{N-1-k} & =x_{2k+1}
-        \end{rcases}
-        k=0,1, \dots, \frac{N}{2}-1
-        \quad & \Rightarrow
-        X_k =2 c_k
-        \Re e^{i\pi\frac{k}{2N}}\symcal{F}^{-1}\left(\vec x'\right)_k
-        \\
-        x_{2k} =
-        \Re \symcal{F}^{-1}\left\{c_lX_le^{i\frac{\pi l}{2N}}\right\}_k
-        \qquad
-              & x_{2k+1} = x_{2(N-1-k)}
-    \end{align*}
 \end{frame}
