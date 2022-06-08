@@ -1,0 +1,67 @@
+\section{Results}
+All the implemented transforms where tested for correctness by comparing the output
+of my implementation to other reference-implementations, like matlab's or scipy's.
+The implementation was also tested for speed depending on the length of the input.
+For a given input length the FFT algorithm was performed multiple times with random numbers
+and the
+runtime was measured and averaged. The number of times the algorithm was evaluated
+was chosen, such that the uncertainty of the average was below \SI{10}{\nano\second}.
+While the actual numbers will be more or less uninteresting, it is possible to see
+the $\symcal{O}(N\log N)$ scaling for powers of 2, as shown in \autoref{fig:timesp2}.
+Especially for higher-length input the scaling is fulfilled, but for short length
+input there is too much overhead, and thus the numbers are not following $N\log N$ perfectly there.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth]{build/plots/times_p2.pdf}
+    \caption{Runtime of the toy FFT algorithm in double-logarithmic-scaling depending on the length of the input sequence.
+        Each random-number input was transformed multiple time and the results were averaged.
+        The function $t(N)=c\times N\log N$ is fitted to the measurements, as we expect this scaling for
+        input lengths in the form of $2^p$. }
+    \label{fig:timesp2}
+\end{figure}
+
+For arbitrary sized input, the actual runtime of this algorithm depends heavily on
+the number of two's in the prime-factor decomposition of the input-length.
+In easier words: the FFT of 48 numbers should be roughly twice as fast as 56, even though
+56 is the higher number.
+The reason is 48 is divisible by 2 4 times ($48=2^4\cdot 3$), where 56 is only divisble by
+2 3 times ($56=2^3\cdot 7$).
+This is also clearly seen in the data, as \autoref{fig:times} shows.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=.5\textwidth]{build/plots/times_lin_c.pdf}
+    \caption{Averaged runtime of the implemented toy FFT algorithm on random numbers depending on the input length.
+        A clear separation of the runtime scaling is seen. The data-points are colored
+        depending on the number of times the input length is divisible by 2.}
+    \label{fig:times}
+\end{figure}
+
+
+\section{Depicting the Fourier Space}
+A digital image is nothing more than $N=h\cdot w\cdot C$ numbers $x_{k,l,c}$
+\footnote{$k=0,\dots, h-1\quad l=0,\dots,w-1\quad c=0,\dots,C-1$}
+between $0$ and $1$.
+Where $w$ is the width, $h$ is the height and $C$ is the number of channels of the image.
+There are a lot of different types of images out there, with different channel numbers and interpretation
+of them (different color encodings, transparent images, etc.), but we will focus on the
+case of grayscale $c=1$ or colored RGB $C=3$ pictrues.
+The interpretation of the number in grayscale images is the illumination of the pixel ranging from $0=$~off~$=$~black
+to $1=$~on~$=$~white.
+In colored RGB images, we have three channels: Red (R), Green (G), Blue (B). Where we can light up each color seperately.
+Because of how the eye works, we are able to trick the brain into perceiving most of the colors by just
+mixing these three.
+The numbers are usually not stored as floating point numbers, but as unsigned integers, most commonly 8-bit unsigned integers.
+This means that 1 is stored as 255 and all the numbers are mapped in an equally spaced fashion.
+If we have multiple channels, we will Fourier transform each channel separately
+\begin{equation}
+    X_{k,l,c} = \frac{1}{\sqrt{hw}}\sum_{n=0}^{h-1}\sum_{w=0}^{w-1}x_{n,m,c} \ e^{-i{2\pi}\ \left(\!\frac{kn}{h}+\frac{lm}{w}\right)}.
+\end{equation}
+In the Fourier space each pixel is a complex number.
+We usually visualize the magnitude and the phase (the argument) of each number.
+Because the magnitude of the Fourier transformed numbers is not guaranteed
+to be between 0 and 255, we scale the Fourier transformed numbers in such a way,
+that the highest is 255 and the lowest is 0
+\begin{equation}
+    X'_{k,l,c} = \frac{X_{k,l,c}-\min_{n,m} X_{n,m,l}}{\max_{n,m} X_{n,m,l}-\min_{n,m} X_{n,m,l}}.
+\end{equation}

@@ -8,6 +8,23 @@ are the $N$ numbers defined as
 For intuitive understanding one can think of $X_k$ as the intensity of the frequency,
 $\nu =\frac{\omega}{2\pi}= k / N$ in the signal.
 
+\begin{table}
+    \centering
+    \caption{Example of the DFT of the sequence 4, 8, 15, 16, 23, 42.}
+    \begin{tabular}{S[table-format=1.0] S[table-format=2.0] S[table-format=2.1] >{\hspace{-1em}}c<{\hspace{-.8em}} S[table-format=2.1]}
+        \toprule
+        {$k$} & {$x_k$} & \multicolumn{3}{c}{$X_k$}               \\
+        \midrule
+        0     & 4       & 44.1                      & $+i$ & 0.0  \\
+        1     & 8       & -2.4                      & $+i$ & 14.8 \\
+        2     & 15      & -9.8                      & $+i$ & 9.1  \\
+        3     & 16      & -9.8                      & $+i$ & 0.0  \\
+        4     & 23      & -9.8                      & $-i$ & 9.1  \\
+        5     & 42      & -2.4                      & $-i$ & 14.8 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
 For a deeper understanding let's take a step back and remember that Fourier
 found that a periodic function can be represented as a weighted sum of cosine and
 sine functions.
@@ -120,7 +137,7 @@ As with the FT, the DFT is easily enlarged to more dimensions
 \end{equation}
 and the inverse
 \begin{equation}
-    x_{l,m} = \frac{1}{\sqrt{N_1N_2}}\sum_{j=0}^{N_1-1}\sum_{l=0}^{N_2-1} X_{j,l} \e^{i{2\pi}\ \left(\!\frac{lj}{N_1}+\frac{ml}{N_2}\right)}.
+    x_{l,m} = \frac{1}{\sqrt{N_1N_2}}\sum_{j=0}^{N_1-1}\sum_{l=0}^{N_2-1} X_{j,l} \ e^{i{2\pi}\ \left(\!\frac{lj}{N_1}+\frac{ml}{N_2}\right)}.
 \end{equation}
 I chose the three-dimensional example here, since we are going to look at images with a color channel, which is three dimensional data.
 Other dimensionalities are analogous.
@@ -239,6 +256,26 @@ Note that this yields problems, if our input data has prime-number length, for t
 exist an algorithm allowing the DFT of prime-number-sized points in $N\log N$ time, using group-theory
 of prime-numbered modulo groups. The algorithm is called \emph{Rader's algorithm}, see \href{https://en.wikipedia.org/wiki/Rader%27s_FFT_algorithm}{en.wikipedia.org/wiki/Rader\%27s\_FFT\_algorithm}.
 
+\subsection{Code}
+The code which produced the results is written in \texttt{C++}.
+No numerical algorithms outside the standard template library were used, which
+means I implemented a version of the FFT and DCT myself.
+The code makes full use of every prime factor of $2$ in the number of transformed points,
+but not the full powered Tukey-Cooley algorithm, since an efficient implementation of that
+requires complicated reordering of the input numbers.
+The used algorithm can handle arbitrary length input data, which makes it
+more general than most implementations found online, since they are usually only implemented
+for powers of 2.
+Nonetheless, the implementation should be viewed more as a toy-implementation for testing
+and can't compete with industry-grade optimized algorithms.
+The FFT, DCT and their respective inverses where implemented in a generic fashion,
+so that they can be used on any datastructure supporting the square-bracket indexing
+operator. Thus, it can be used on raw pointers as well as on higher level structures
+like vectors.
+
+The images in the Fourier space were represented by complex matrices from the \texttt{Eigen}
+library.
+To handle images, as well as image-input and -output the Boost Generic Image Library \texttt{Boost::GIL} was used.
 
 \section{Applications}
 One of the most notable places the Fourier transform appears in physics is the
@@ -265,19 +302,3 @@ Generally, a lot of interesting edits can be performed in Fourier space, having 
 And by removing high-frequencies the sharpness can be increased and by doing the inverse the image will be blurred.
 
 
-\subsection{Code}
-The code which produced the results is written in \texttt{C++}.
-No numerical algorithms outside the standard template library were used, which
-means I implemented a version of the FFT and DCT myself.
-The code makes full use of every prime factor of $2$ in the number of transformed points,
-but not the full powered Tukey-Cooley algorithm, since an efficient implementation of that
-requires complicated reordering of the input numbers.
-The used algorithm can handle arbitrary length input data, which makes it
-more general than most implementations found online, since they are usually only implemented
-for powers of 2.
-Nonetheless, the implementation should be viewed more as a toy-implementation for testing
-and can't compete with industry-grade optimized algorithms.
-
-The images in the Fourier space were represented by complex matrices from the \texttt{Eigen}
-library.
-To handle images, as well as image-input and -output the Boost Generic Image Library \texttt{Boost::GIL} was used.
