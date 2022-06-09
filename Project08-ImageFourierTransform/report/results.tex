@@ -212,9 +212,18 @@ in \autoref{fig:blur_2} to \autoref{fig:blur_smooth}.
     \label{fig:blur_smooth}
 \end{figure}
 
+\FloatBarrier
 
-If we do the opposite and take away some low frequencies, we are sharpening the image.
-If we take it to the extreme and remove most low frequencies, we have edge detection.
+If we do the opposite and take away some low frequencies, we are "sharpening" the image.
+We must not understand "sharpening" in the literal meaning, like focusing the lens of a camera,
+since we can not generate new information in the image. We can only enhance the short range information.
+There are a couple of examples below in \autoref{fig:blackhole} to \autoref{fig:blackhole_sharp_g_g}.
+You will notice the colors in the images are distorted, since we completely treat the
+color channels separately. In \autoref{fig:blackhole_sharp_g_g} you can see a grayscale version
+of the edit, where the colors might be less distracting.
+
+If we take it to the extreme and remove most low frequencies, we can seethe edges in the image, this
+is demonstrated in \autoref{fig:edges}.
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[h]{.49\linewidth}
@@ -227,6 +236,161 @@ If we take it to the extreme and remove most low frequencies, we have edge detec
         \includegraphics[width=.9\linewidth]{images/blackhole.png}
         \caption{Original}
     \end{subfigure}\
-    \caption{The movie poster of Dune (2021) which serves as an example image being blurred in this section.}
-    \label{fig:dune_orig}
+    \caption{The first image of a black hole, taken in 2021.
+        This appears not to be sharp and is taken as an example to experiment with sharpening in Fourier space in this section. }
+    \label{fig:blackhole}
+\end{figure}
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[h]{.49\linewidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{build/output/blackhole_sharp1_mask.png}
+        \caption{Edit in Fourier space}
+    \end{subfigure}
+    \begin{subfigure}[h]{.49\linewidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{build/output/blackhole_sharp1.png}
+        \caption{Transformed back to real space}
+    \end{subfigure}\
+    \caption{The black hole image sharpened by applying a circular filter with a radius of 1\% of the height.}
+    \label{fig:blackhole_sharp}
+\end{figure}
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[h]{.49\linewidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{build/output/blackhole_sharp3_mask.png}
+        \caption{Edit in Fourier space}
+    \end{subfigure}
+    \begin{subfigure}[h]{.49\linewidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{build/output/blackhole_sharp3.png}
+        \caption{Transformed back to real space}
+    \end{subfigure}\
+    \caption{The black hole image sharpened by applying a circular filter with a radius of 3\% of the height.}
+    \label{fig:blackhole_sharp3}
+\end{figure}
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[h]{.49\linewidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{build/output/blackhole_sharp_smooth_mask.png}
+        \caption{Edit in Fourier space}
+    \end{subfigure}
+    \begin{subfigure}[h]{.49\linewidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{build/output/blackhole_sharp_smooth.png}
+        \caption{Transformed back to real space}
+    \end{subfigure}\
+    \caption{The black hole image sharpened by applying a Gaussian filter of $1-\exp(-0.01 ((k'-h/2)^2+(l'-w/2)^2))$.}
+    \label{fig:blackhole_sharp_g}
+\end{figure}
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[h]{.49\linewidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{build/output/blackhole_sharp_smooth_mask_g.png}
+        \caption{Edit in Fourier space}
+    \end{subfigure}
+    \begin{subfigure}[h]{.49\linewidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{build/output/blackhole_sharp_smooth_g.png}
+        \caption{Original}
+    \end{subfigure}\
+    \caption{The black hole image sharpened by applying a Gaussian filter of $1-\exp(-0.01 ((k'-h/2)^2+(l'-w/2)^2))$ in black and white.}
+    \label{fig:blackhole_sharp_g_g}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[h]{.32\linewidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{images/A.png}
+        \caption{Original }
+    \end{subfigure}
+    \begin{subfigure}[h]{.32\linewidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{build/output/A_sharp_smooth_mask.png}
+        \caption{Edit}
+    \end{subfigure}
+    \begin{subfigure}[h]{.32\linewidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{build/output/A_sharp_smooth.png}
+        \caption{Back to real space}
+    \end{subfigure}\
+    \caption{An image sharpened with a Gaussian filter of $1-\exp(-0.001 ((k'-h/2)^2+(l'-w/2)^2))$ to demonstrate edge-detecting capabilities of Fourier edits.}
+    \label{fig:edges}
+\end{figure}
+
+\subsection{Diffraction}
+As already mentioned, we can
+"simulate" Fraunhofer diffraction by displaying the magnitude of the Fourier transformed image.
+In the images in this section, you will be able to realize a couple of known features
+of diffraction images.
+Lines in the diffraction images will be perpendicular to lines in the aperture (the original image).
+For two double slits of width $b$ and distance $a$ the analytical expression for Fraunhofer diffraction
+is
+\begin{equation}
+    I(\theta) = I_0 \left(\frac{\sin(c b \sin\theta)}{c b \sin\theta} \cos(c a \sin\theta)\right)^2.
+\end{equation}
+With some constant $c$. From this we can read that the smaller the slits are, the wider the
+encapsulating intensity is (since $b < a$) and the closer the slits are, the smaller the distance between
+the peaks is. This can be seen in \autoref{fig:double_slit}.
+
+This calculation is rather simple, but also more complex apertures can be investigated, like a circular
+aperture, seen in \autoref{fig:circular}. The analytical solution to this is a Bessel function of the radius.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[h]{\linewidth}
+        \centering
+        \includegraphics[width=.49\linewidth]{images/hole.png}
+        \includegraphics[width=.49\linewidth]{build/output/hole_mag.png}
+        \caption{Circular aperture.}
+    \end{subfigure}
+    \begin{subfigure}[h]{\linewidth}
+        \centering
+        \includegraphics[width=.49\linewidth]{images/hole_tiny.png}
+        \includegraphics[width=.49\linewidth]{build/output/hole_tiny_mag.png}
+        \caption{Circular aperture with smaller radius.}
+    \end{subfigure}
+    \caption{Fraunhofer diffraction image (right) for two different circular apertures (left).}
+    \label{fig:circular}
+\end{figure}
+
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[h]{\linewidth}
+        \centering
+        \includegraphics[width=.49\linewidth]{images/double_slit_small_norm.png}
+        \includegraphics[width=.49\linewidth]{build/output/double_slit_small_norm_mag.png}
+        \caption{Double slit.}
+    \end{subfigure}
+    \begin{subfigure}[h]{\linewidth}
+        \centering
+        \includegraphics[width=.49\linewidth]{images/double_slit_small_close.png}
+        \includegraphics[width=.49\linewidth]{build/output/double_slit_small_close_mag.png}
+        \caption{Double slit where the slits are closer.}
+    \end{subfigure}
+    % \begin{subfigure}[h]{\linewidth}
+    %     \centering
+    %     \includegraphics[width=.49\linewidth]{images/double_slit_small_wide.png}
+    %     \includegraphics[width=.49\linewidth]{build/output/double_slit_small_wide_mag.png}
+    %     \caption{Simulated diffraction image (right) of aperture image (left).}
+    % \end{subfigure}
+    \begin{subfigure}[h]{\linewidth}
+        \centering
+        \includegraphics[width=.49\linewidth]{images/double_slit_small_widest.png}
+        \includegraphics[width=.49\linewidth]{build/output/double_slit_small_widest_mag.png}
+        \caption{Double slit where the slits are further apart.}
+    \end{subfigure}
+    \begin{subfigure}[h]{\linewidth}
+        \centering
+        \includegraphics[width=.49\linewidth]{images/double_slit_norm_widest.png}
+        \includegraphics[width=.49\linewidth]{build/output/double_slit_norm_widest_mag.png}
+        \caption{Double slit with wider slits, but same distance as last image.}
+    \end{subfigure}
+    \caption{Different images of double slits with different features. The aperture image is on the left and the diffraction image is on the right.}
+    \label{fig:double_slit}
 \end{figure}

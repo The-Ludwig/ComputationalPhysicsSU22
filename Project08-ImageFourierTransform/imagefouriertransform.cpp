@@ -164,8 +164,8 @@ int main(int argc, char const* argv[]) {
   //   blur("images/A.png", "build/plots/A_blur1.png",
   //        "build/plots/A_blur1_mask.png", .1);
 
-  //   sharpen("images/A.png", "build/plots/A_sharpen95.png",
-  //           "build/plots/A_sharpen95_mask.png", .95);
+  sharpen("images/A.png", "build/output/A_sharpen95.png",
+          "build/output/A_sharpen95_mask.png", .95);
   //   sharpen("images/A.png", "build/plots/A_sharpen9.png",
   //           "build/plots/A_sharpen9_mask.png", .9);
   //   sharpen("images/A.png", "build/plots/A_sharpen8.png",
@@ -182,8 +182,11 @@ int main(int argc, char const* argv[]) {
   //           "build/plots/A_sharpen3_mask.png", .3);
   //   sharpen("images/A.png", "build/plots/A_sharpen2.png",
   //           "build/plots/A_sharpen2_mask.png", .2);
-  //   sharpen("images/A.png", "build/plots/A_sharpen1.png",
-  //           "build/plots/A_sharpen1_mask.png", .1);
+  sharpen("images/A.png", "build/output/A_sharpen1.png",
+          "build/output/A_sharpen1_mask.png", .1);
+
+  sharpen_smooth("images/A.png", "build/output/A_sharp_smooth.png",
+                 "build/output/A_sharp_smooth_mask.png", .001, false);
 
   //   rect_filter("images/A.png", "build/plots/A_blur_rect95.png",
   //               "build/plots/A_blur_rect95_mask.png", .95, .95);
