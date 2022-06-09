@@ -11,11 +11,11 @@ the $\symcal{O}(N\log N)$ scaling for powers of 2, as shown in \autoref{fig:time
 Especially for higher-length input the scaling is fulfilled, but for short length
 input there is too much overhead, and thus the numbers are not following $N\log N$ perfectly there.
 
-\begin{figure}[htbp]
+\begin{figure}[t]
     \centering
     \includegraphics[width=\linewidth]{build/plots/times_p2.pdf}
-    \caption{Runtime of the toy FFT algorithm in double-logarithmic-scaling depending on the length of the input sequence.
-        Each random-number input was transformed multiple time and the results were averaged.
+    \caption{Runtime of my FFT implementation in double-logarithmic-scaling depending on the length of the input sequence.
+        Each random-number input is transformed multiple time and the results were averaged.
         The function $t(N)=c\times N\log N$ is fitted to the measurements, as we expect this scaling for
         input lengths in the form of $2^p$. }
     \label{fig:timesp2}
@@ -28,10 +28,10 @@ In easier words: the FFT of 48 numbers should be roughly twice as fast as 56, ev
 The reason is 48 is divisible by 2 4 times ($48=2^4\cdot 3$), where 56 is only divisble by
 2 3 times ($56=2^3\cdot 7$).
 This is also clearly seen in the data, as \autoref{fig:times} shows.
-\begin{figure}[htbp]
+\begin{figure}[t]
     \centering
     \includegraphics[width=.5\textwidth]{build/plots/times_lin_c.pdf}
-    \caption{Averaged runtime of the implemented toy FFT algorithm on random numbers depending on the input length.
+    \caption{Averaged runtime of the implemented FFT algorithm on random numbers depending on the input length.
         A clear separation of the runtime scaling is seen. The data-points are colored
         depending on the number of times the input length is divisible by 2.}
     \label{fig:times}
@@ -45,31 +45,32 @@ between $0$ and $1$.
 Where $w$ is the width, $h$ is the height and $C$ is the number of channels of the image.
 There are a lot of different types of images out there, with different channel numbers and interpretation
 of them (different color encodings, transparent images, etc.), but we will focus on the
-case of grayscale $c=1$ or colored RGB $C=3$ pictrues.
+case of grayscale $C=1$ or colored RGB $C=3$ pictures.
 The interpretation of the number in grayscale images is the illumination of the pixel ranging from $0=$~off~$=$~black
 to $1=$~on~$=$~white.
-In colored RGB images, we have three channels: Red (R), Green (G), Blue (B). Where we can light up each color seperately.
+In colored RGB images, we have three channels: Red (R), Green (G), Blue (B). Where we can light up each color separately.
 Because of how the eye works, we are able to trick the brain into perceiving most of the colors by just
 mixing these three.
 The numbers are usually not stored as floating point numbers, but as unsigned integers, most commonly 8-bit unsigned integers.
-This means that 1 is stored as 255 and all the numbers are mapped in an equally spaced fashion.
-If we have multiple channels, we will Fourier transform each channel separately
-\begin{equation}
+This means that 1 is stored as 255 and 0 as 0 and all the numbers are mapped in an equally spaced fashion.
+If we have multiple channels, we will Fourier transform each channel separately and
+equation \eqref{eqn:dft2d} gets the form
+\begin{equation*}
     X_{k,l,c} = \frac{1}{\sqrt{hw}}\sum_{n=0}^{h-1}\sum_{m=0}^{w-1}x_{n,m,c} \ e^{-i{2\pi}\ \left(\!\frac{kn}{h}+\frac{lm}{w}\right)}.
-\end{equation}
+\end{equation*}
 In the Fourier space each pixel is a complex number.
 We usually visualize the magnitude and the phase (the argument) of each number.
 Because the magnitude of the Fourier transformed numbers is not guaranteed
 to be between 0 and 255, we scale the Fourier transformed numbers in such a way,
 that the highest is 255 and the lowest is 0
-\begin{equation}
+\begin{equation*}
     \abs {X'_{k,l,c}} = 255\frac{\abs {X_{k,l,c}}-\min_{n,m} \abs {X_{n,m,c}}}{\max_{n,m} \abs {X_w{n,m,c}}-\min_{n,m} \abs {X_{n,m,c}}}.
-\end{equation}
+\end{equation*}
 We also scale the phases to the range of $(0, 255)$
-\begin{equation}
+\begin{equation*}
     \arg {X'_{k,l,c}} = 255\frac{\arg X_{k,l,c}}{2\pi}.
-\end{equation}
-This mode of visualization can be seen in \autoref{subfig:ftm_n} to \autoref{subfig:ftp_n}.
+\end{equation*}
+This mode of visualization can be seen in \autoref{subfig:ftm_n} and \autoref{subfig:ftp_n}.
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[h]{.9\linewidth}
@@ -101,21 +102,22 @@ This mode of visualization can be seen in \autoref{subfig:ftm_n} to \autoref{sub
         \caption{FT Magnitude in logarithmic space and rearranged}
         \label{subfig:ftm}
     \end{subfigure}
-    \caption{An example of the Fourier transform. The image is the first calibration picture of the new James-Webb space telescope. }
+    \caption{An example of the Fourier transform. The image is the first calibration picture of the new James-Webb space telescope\cite{webbimg}. }
     \label{fig:fourier_example_n}
 \end{figure}
 
 As you can see in the example image, the Fourier magnitude is mostly black, and the phases appear to be noise to the eye.
 To better distinguish small features, we will now switch to logarithmic color-space for the magnitude
-\begin{equation}
+\begin{equation*}
     \abs {X''_{k,l,c}} = 255\frac{\log \abs {X_{k,l,c}}-\min_{n,m} \log\abs {X_{n,m,c}} } {\max_{n,m} \log\abs {X_{n,m,c}}-\min_{n,m} \log\abs {X_{n,m,c}}}.
-\end{equation}
+\end{equation*}
 This is depicted in \autoref{subfig:ftm_log}.
 Finally, to better resemble the symmetries in the Fourier space and
 to have low frequencies in the middle of the picture, and high frequencies outside,
 the indices are shifted
 \begin{equation}
     k' = \lfloor k+h/2\rfloor \mod h \qquad l'=\lfloor l+w/2\rfloor\mod w.
+    \label{eqn:shift}
 \end{equation}
 This will be our method of visualization from now on and can be seen in \autoref{subfig:ftm}.
 
@@ -147,7 +149,7 @@ in \autoref{fig:blur_2} to \autoref{fig:blur_smooth}.
         \includegraphics[width=.9\linewidth]{images/dune.png}
         \caption{Original}
     \end{subfigure}\
-    \caption{The movie poster of Dune (2021) which serves as an example image being blurred in this section.}
+    \caption{A movie poster of Dune (2021) which serves as an example image being blurred in this section \cite{dune}.}
     \label{fig:dune_orig}
 \end{figure}
 
@@ -179,7 +181,7 @@ in \autoref{fig:blur_2} to \autoref{fig:blur_smooth}.
         \caption{Transformed back to real space}
     \end{subfigure}\
     \caption{The poster blurred by only keeping the innermost frequencies with a radius of $10\%$ of the width. This is a circular filter.}
-    \label{fig:blur_2}
+    \label{fig:blur_1}
 \end{figure}
 \begin{figure}[htbp]
     \centering
@@ -224,7 +226,7 @@ of the edit, where the colors might be less distracting.
 
 If we take it to the extreme and remove most low frequencies, we can seethe edges in the image, this
 is demonstrated in \autoref{fig:edges}.
-\begin{figure}[htbp]
+\begin{figure}
     \centering
     \begin{subfigure}[h]{.49\linewidth}
         \centering
@@ -240,7 +242,7 @@ is demonstrated in \autoref{fig:edges}.
         This appears not to be sharp and is taken as an example to experiment with sharpening in Fourier space in this section. }
     \label{fig:blackhole}
 \end{figure}
-\begin{figure}[htbp]
+\begin{figure}
     \centering
     \begin{subfigure}[h]{.49\linewidth}
         \centering
@@ -255,7 +257,7 @@ is demonstrated in \autoref{fig:edges}.
     \caption{The black hole image sharpened by applying a circular filter with a radius of 1\% of the height.}
     \label{fig:blackhole_sharp}
 \end{figure}
-\begin{figure}[htbp]
+\begin{figure}
     \centering
     \begin{subfigure}[h]{.49\linewidth}
         \centering
@@ -270,7 +272,7 @@ is demonstrated in \autoref{fig:edges}.
     \caption{The black hole image sharpened by applying a circular filter with a radius of 3\% of the height.}
     \label{fig:blackhole_sharp3}
 \end{figure}
-\begin{figure}[htbp]
+\begin{figure}
     \centering
     \begin{subfigure}[h]{.49\linewidth}
         \centering
@@ -285,7 +287,7 @@ is demonstrated in \autoref{fig:edges}.
     \caption{The black hole image sharpened by applying a Gaussian filter of $1-\exp(-0.01 ((k'-h/2)^2+(l'-w/2)^2))$.}
     \label{fig:blackhole_sharp_g}
 \end{figure}
-\begin{figure}[htbp]
+\begin{figure}
     \centering
     \begin{subfigure}[h]{.49\linewidth}
         \centering
@@ -300,8 +302,7 @@ is demonstrated in \autoref{fig:edges}.
     \caption{The black hole image sharpened by applying a Gaussian filter of $1-\exp(-0.01 ((k'-h/2)^2+(l'-w/2)^2))$ in black and white.}
     \label{fig:blackhole_sharp_g_g}
 \end{figure}
-
-\begin{figure}[htbp]
+\begin{figure}
     \centering
     \begin{subfigure}[h]{.32\linewidth}
         \centering
@@ -317,10 +318,11 @@ is demonstrated in \autoref{fig:edges}.
         \centering
         \includegraphics[width=.9\linewidth]{build/output/A_sharp_smooth.png}
         \caption{Back to real space}
-    \end{subfigure}\
+    \end{subfigure}
     \caption{An image sharpened with a Gaussian filter of $1-\exp(-0.001 ((k'-h/2)^2+(l'-w/2)^2))$ to demonstrate edge-detecting capabilities of Fourier edits.}
     \label{fig:edges}
 \end{figure}
+\FloatBarrier
 
 \subsection{Diffraction}
 As already mentioned, we can
@@ -330,9 +332,10 @@ of diffraction images.
 Lines in the diffraction images will be perpendicular to lines in the aperture (the original image).
 For two double slits of width $b$ and distance $a$ the analytical expression for Fraunhofer diffraction
 is
-\begin{equation}
+\begin{equation*}
     I(\theta) = I_0 \left(\frac{\sin(c b \sin\theta)}{c b \sin\theta} \cos(c a \sin\theta)\right)^2.
-\end{equation}
+\end{equation*}
+Which is calculated by solving equation \eqref{eqn:fraunhofer}.
 With some constant $c$. From this we can read that the smaller the slits are, the wider the
 encapsulating intensity is (since $b < a$) and the closer the slits are, the smaller the distance between
 the peaks is. This can be seen in \autoref{fig:double_slit}.
@@ -393,4 +396,50 @@ aperture, seen in \autoref{fig:circular}. The analytical solution to this is a B
     \end{subfigure}
     \caption{Different images of double slits with different features. The aperture image is on the left and the diffraction image is on the right.}
     \label{fig:double_slit}
+\end{figure}
+
+\subsection{Compression}
+In this section we will very quickly review a naive compression algorithm, based on the discrete cosine transform.
+Here the images will not be displayed in the transformed space, since they were very uninformative in my testing.
+They appeared to look like mostly a single color with very subtle variation.
+The idea of our naive compression is to sort the cosine-space coefficient by magnitude and just
+set the lowest of them to zero. Then we only need to save the nonzero coefficients.
+The results of removing the lowest coefficients in this way can be seen in \autoref{fig:compr}.
+
+It is fairly obvious, that this compression is not looking very good, except at low compression rates.
+But would it save space on disk? To answer this question I implemented a very simple binary format,
+saving the cosine coefficients and their indices in a binary, compressed format. Sadly, except
+at absurdly high compressions, this did not save disk space.
+On the contrary: The file size actually increased, since now that we are not saving every
+pixel, we also have to save the indices, which takes additional space.
+The actual \texttt{.jpg} format is a little bit more complicated.
+It performs the DCT on each $8\times 8$ tile in the image and instead of
+setting small amplitudes to 0, it tries to find a smaller, finite set of amplitudes,
+so that setting the real amplitudes to the one closest to it in the smaller set of amplitudes, does
+not change too much.
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[h]{.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{build/plots/A9.png}
+        \caption{10\% compression}
+    \end{subfigure}
+    \begin{subfigure}[h]{.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{build/plots/A5.png}
+        \caption{50\% compression}
+    \end{subfigure}
+    \begin{subfigure}[h]{.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{build/plots/A2.png}
+        \caption{80\% compression}
+    \end{subfigure}
+    \begin{subfigure}[h]{.49\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{build/plots/A1.png}
+        \caption{90\% compression}
+    \end{subfigure}
+    \caption{The same image with different "compression levels". 10\% compression means that the lowest 10\% of the
+        cosine coefficients have been set to 0.}
+    \label{fig:compr}
 \end{figure}

@@ -1,12 +1,13 @@
 \section{Discrete Fourier Transform}
 
-The \emph{Discrete Fourier Transform (DFT)} of a series of complex numbers $\vec x = x_0, \dots, x_{N-1}$
+The \emph{Discrete Fourier Transform (DFT)} of a series of complex numbers $\left\{x_n\right\} = x_0, \dots, x_{N-1}$
 are the $N$ numbers defined as
-\begin{equation}
-    X_k = \symcal{F}\left(\vec x\right)_k = \frac{1}{\sqrt{N}}\sum_{n=0}^{N-1} x_n e^{-i\frac{2\pi}{N}n k}.
-\end{equation}
-For intuitive understanding one can think of $X_k$ as the intensity of the frequency,
-$\nu =\frac{\omega}{2\pi}= k / N$ in the signal.
+\begin{equation*}
+    X_k = \symcal{F}\left\{x_n\right\}_k = \frac{1}{\sqrt{N}}\sum_{n=0}^{N-1} x_n e^{-i\frac{2\pi}{N}n k}.
+\end{equation*}
+An example can be found in \autoref{tab:ex}.
+% For intuitive understanding one can think of $X_k$ as the intensity of the frequency,
+% $\nu =\frac{\omega}{2\pi}= k / N$ in the signal.
 
 \begin{table}
     \centering
@@ -23,34 +24,35 @@ $\nu =\frac{\omega}{2\pi}= k / N$ in the signal.
         5     & 42      & -2.4                      & $-i$ & 14.8 \\
         \bottomrule
     \end{tabular}
+    \label{tab:ex}
 \end{table}
 
-For a deeper understanding let's take a step back and remember that Fourier
-found that a periodic function can be represented as a weighted sum of cosine and
+For a deeper, intuitive understanding let's take a step back and remember that Fourier
+found that (nearly) any periodic function can be represented as a weighted sum of cosine and
 sine functions.
 This does not only apply for continuous, but also discontinuous functions,
 such as a square wave.
 To put it in a more mathematical way: The
 $L^2([0, T])$-space\footnote{This means every complex-valued function defined on $[0, T]$, which's absolute square is integrable over $[0, T]$.}
 has the orthonormal basis functions
-\begin{equation}
+\begin{equation*}
     \phi_k(x)=\exp\left({-2ikx\frac{2\pi}{T}}\right) \quad k\in \mathbb{Z},
-\end{equation}
+\end{equation*}
 so any function $f(x)\in L^{2}([0, T])$ can be written as
-\begin{equation}
+\begin{equation*}
     f(x) \equiv \sum_{k=-\infty}^{\infty} \underbrace{\left< f, \phi_k \right>}_{a_k} \phi_k(x)
     = \sum_{k=-\infty}^{\infty} {a_k} \exp\left({-2ikx\frac{2\pi}{T}}\right)
-\end{equation}
+\end{equation*}
 where $\equiv$ means "equals almost everywhere under the norm induced by the scalar product $\left<\cdot,\cdot\right>$".
 This sum is called a Fourier series.
-The scalar product (and thus the norm) in this space is
-\begin{equation}
+The scalar product (inducing the norm) in this space is
+\begin{equation*}
     \left< f, g\right> = \int_0^T f(x)g^*(x) \dif x.
-\end{equation}
+\end{equation*}
 Thus, the Fourier coefficients $a_k$ are
-\begin{equation}
-    a_k = \int_0^T f(x) \exp\left({ikx\frac{2\pi}{T}}\right) \dif x
-\end{equation}
+\begin{equation*}
+    a_k = \int_0^T f(x) \exp\left({ikx\frac{2\pi}{T}}\right) \dif x.
+\end{equation*}
 This is a very abstract definition, but if we get used to the math,
 this only precises the findings of Fourier: A periodic function
 (our functions are restricted to $[0, T]$, but they can be thought of as being periodically continued everywhere else)
@@ -60,49 +62,47 @@ If we now have a function which is neither confined nor periodic, we can handwav
 that we need a continues set of basis functions. This is a way of approaching the continuous \emph{Fourier Transform (FT)}.
 The idea of the FT is to transform the original function $f$ to another function $\hat f$ without loosing any information and thus being
 able to transform the function back.
-The transformation is similar to the definition of the Fourier coefficients
-\begin{equation}
+The transformation is similar to the definition of the Fourier coefficients\footnote{Watch out for
+    different definitions of factors when comparing different sources}
+\begin{equation*}
     \hat f(\nu) = \int_{-\infty}^{\infty} f(x) e^{-i2\pi\nu x} \dif x.
-\end{equation}
-The inverse Fourier transform is given by
-\begin{equation}
+\end{equation*}
+The inverse Fourier transform is given by\footnote{
+    To proof the corectness, expressing the Dirac $\delta$-function as
+    $\delta(x)~=~\int_{-\infty}^{\infty} e^{-i2\pi \nu x} \dif \nu$ is helpful.
+}
+\begin{equation*}
     f(x) = \int_{-\infty}^{\infty} \hat f(\nu) e^{i2\pi\nu x} \dif \nu.
-\end{equation}
+\end{equation*}
 For this the function $f: \mathbb{R}\to \mathbb{C}$ only has to be absolutely integrable, so that
 $\int_{\mathbb{R}} \abs{f(x)} \dif x$ is defined.
-
-The correctness of the inverse-rule can be shown if we express the Dirac $\delta$-function as
-\begin{equation}
-    \delta(x) = \int_{-\infty}^{\infty} e^{-i2\pi \nu x} \dif \nu.
-\end{equation}
-
 Again $\hat f(\nu)$ can be thought of as the intensity of the frequency $\nu$ in the function. That's
-why we name the domain $\nu$ and $\hat f$ is often called $f$ in frequency-space.
+why we name the domain $\nu$ and $\hat f$ is often called $f$ in frequency- or Fourier space.
 This definition is easily extended to functions which take multi-dimensional input $f: \mathbb{R}^n \to \mathbb{C}$
-\begin{equation}
+\begin{equation*}
     \hat f(\vec \nu) = \int_{\mathbb{R}^n} f(\vec x) e^{-i2\pi\vec \nu \cdot \vec x} \dif{}^n x.
-\end{equation}
+\end{equation*}
 And the inverse transform likewise.
 
 Now we can motivate the DFT: If we define a function (to be exact: a distribution) as
-\begin{equation}
+\begin{equation*}
     f(x) = \frac{1}{\sqrt N} \sum_{n=0}^{N-1} x_n\ \delta\left(x-{n}\right)
-\end{equation}
+\end{equation*}
 the DFT of the points is the FT of this function at the frequencies $k/N$
-\begin{equation}
+\begin{equation*}
     \begin{split}
         \hat f\left(\frac{k}{N}\right) = \int_{-\infty}^{\infty}  \frac{1}{\sqrt N} \sum_{n=0}^{N-1}
         x_n\ \delta\left(x-{n}\right) e^{-i2\pi\frac{k}{N} x} \dif x\\
         = \frac{1}{\sqrt N} \sum_{n=0}^{N-1} x_n e^{-i2\pi k \frac{n}{N}}
         = X_k.
     \end{split}
-\end{equation}
+\end{equation*}
 And likewise, if we define the function
-\begin{equation}
+\begin{equation*}
     F(\nu) = \frac{1}{\sqrt N} \sum_{n=0}^{N-1} X_n\ \delta\left(\nu-{n}\right)
-\end{equation}
+\end{equation*}
 it's inverse FT at $k/N$ is the inverse DFT of the points $X_k$
-\begin{equation}
+\begin{equation*}
     \begin{split}
         \hat F\left(\frac{k}{N}\right)
         = \int_{-\infty}^{\infty}  \frac{1}{\sqrt N} \sum_{n=0}^{N-1}
@@ -113,9 +113,9 @@ it's inverse FT at $k/N$ is the inverse DFT of the points $X_k$
         =  \sum_{m=0}^{N-1}
         x_m\delta_{m,k} = x_k.
     \end{split}
-\end{equation}
-Where we have used the relation with the geometric series
-\begin{equation}
+\end{equation*}
+Where we have proofed the relation using the geometric series
+\begin{equation*}
     \frac{1}{N}
     \sum_{n=0}^{N-1}
     e^{-i2\pi \frac{n}{N}(m-k)}=
@@ -124,7 +124,7 @@ Where we have used the relation with the geometric series
         1                                                        & \forall m=k
     \end{cases}
     = \delta_{m,k}.
-\end{equation}
+\end{equation*}
 The definition of the function might seem abstract at first glance, but it is nothing
 more than a more mathematical way of expressing, that we only have $N$ samples of
 an unknown functions at these points.
@@ -133,14 +133,16 @@ the points.
 
 As with the FT, the DFT is easily enlarged to more dimensions
 \begin{equation}
-    X_{l,m} = \frac{1}{\sqrt{N_1N_2}}\sum_{j=0}^{N_1-1}\sum_{l=0}^{N_2-1}x_{j,l} \ e^{-i{2\pi}\ \left(\!\frac{lj}{N_1}+\frac{ml}{N_2}\right)}.
+    X_{k,l} = \frac{1}{\sqrt{N_1N_2}}\sum_{n=0}^{N_1-1}\sum_{m=0}^{N_2-1}x_{n,m} \ e^{-i{2\pi}\ \left(\!\frac{kn}{N_1}+\frac{ml}{N_2}\right)}
+    \label{eqn:dft2d}
 \end{equation}
 and the inverse
 \begin{equation}
-    x_{l,m} = \frac{1}{\sqrt{N_1N_2}}\sum_{j=0}^{N_1-1}\sum_{l=0}^{N_2-1} X_{j,l} \ e^{i{2\pi}\ \left(\!\frac{lj}{N_1}+\frac{ml}{N_2}\right)}.
+    x_{k,l} = \frac{1}{\sqrt{N_1N_2}}\sum_{n=0}^{N_1-1}\sum_{m=0}^{N_2-1} X_{n,m} \ e^{i{2\pi}\ \left(\!\frac{kn}{N_1}+\frac{ml}{N_2}\right)}.
+    \label{eqn:idft2d}
 \end{equation}
-I chose the three-dimensional example here, since we are going to look at images with a color channel, which is three dimensional data.
-Other dimensionalities are analogous.
+I chose the three-dimensional example here, since we are going to look at images with a color channel, which is three-dimensional data.
+Other dimensionality are analogous.
 
 \subsection{Real Numbered Input Data}
 An image will only contain real numbered input values. This yields the following symmetry in the transformation
@@ -149,9 +151,9 @@ An image will only contain real numbered input values. This yields the following
     \label{eqn:realFSymmetry}
 \end{equation}
 On the one hand, this is a very useful result: If we transform an image consisting of $N$ real numbers,
-we do not want to end up with $N$ complex (or equivalently $2N$ real) numbers.
-On the other hand this poses a challenge in displaying the transformed image.
-Usually we can only display the magnitude of the transformed image.
+we do not want to end up with $N$ complex (or equivalently $2N$ real) numbers and thus having more numbers than we started with.
+On the other hand the problem of displaying the transformed image still remains: we have to visualize a two-dimensional array of complex numbers.
+Usually we display the magnitude of the transformed image and its phase (also called the argument) separately.
 
 Since it seems quite artificial to introduce complex numbers in a problem only consisting of real numbers,
 for image compression usually a very closely related transform is used, the \emph{Discrete Cosine Transfrom (DCT)}.
@@ -176,46 +178,48 @@ and it's inverse by
 \end{equation}
 \cite{DCT}
 The DCT can be calculated using the DFT. An efficient algorithm for this from \cite{DCTUFFT} first reorders the points to
-\begin{equation}
+\begin{equation*}
     \begin{rcases}
         x'_k       & = x_{2k}  \\
         x'_{N-1-k} & =x_{2k+1}
     \end{rcases}
     k=0,1, \dots, \frac{N}{2}-1
-\end{equation}
+\end{equation*}
 to obtain the relation
-\begin{equation}
+\begin{equation*}
     \symcal{C}\left(\vec x\right)_k = X_k =2 c_k
     \Re e^{i\pi\frac{k}{2N}}\symcal{F}^{-1}\left(\vec x'\right)_k
-\end{equation}
+\end{equation*}
 and it's inverse
-\begin{equation}
+\begin{equation*}
     \begin{split}
         \symcal{C}^{-1}\left(\vec X\right)_{2k} =& x_{2k} =
         \Re \symcal{F}^{-1}\left\{c_lX_le^{i\frac{\pi l}{2N}}\right\}_k
         \\
         &x_{2k+1} = x_{2(N-1-k)}.
     \end{split}
-\end{equation}
+\end{equation*}
 Note, that we only need to calculate half of the Fourier coefficients, if we make use of
 Equation \eqref{eqn:realFSymmetry}.
 
-\section{The Numerical Implementation: The Fast Fourier Transform}
-Firstly, we notice that the multidimensional discrete Fourier transform is
-separable into multiple one dimensional DFT, performed one after another.
-Thus, we will concentrate on optimizing the one dimensional DFT:
-\begin{equation}
-    X_{l,m} = \symcal{F} \left\{\symcal{F}\{(x_i)_j\}_m\right\}_l
-\end{equation}
+\section{The Fast Fourier Transform}
+Our goal is to find an efficient algorithm for our numerical implementation of
+the discrete Fourier transform.
+Firstly, we notice that the multidimensional DFT is
+separable into multiple one dimensional DFTs, performed one after another
+\begin{equation*}
+    X_{l,m} = \symcal{F} \left\{\symcal{F}\{(x_i)_j\}_m\right\}_l.
+\end{equation*}
+Thus, we will concentrate on optimizing the one dimensional DFT.
 
-We can see that the direct implementation of the DFT is like a matrix-multiplication
+We can see that the direct implementation of the DFT is nothing more than a matrix-multiplication
 \footnote{In fact, it is possible to interpret the DFT as a curve fitting problem with the design matrix $A_{m,n}=e^{-i2\pi\frac{mn}{N}} / \sqrt{N}$.}.
 As that, the computational complexity of the bare DFT implementation scales with $\symcal{O}(N^2)$.
 But the concrete form of the transform allows us to get down to $\symcal{O}(N\log N)$.
 From this scaling law, we can already guess, that we will use a divide-and-conquer algorithm.
 The basic idea is to express the Fourier transform of $N$ points in multiple smaller Fourier transforms, and thus dividing and conquering.
 Let's assume $N$ is even and observe that
-\begin{equation}
+\begin{equation*}
     \begin{split}
         X_k &= \frac{1}{\sqrt{N}}\sum_{n=0}^{N-1} x_n e^{-i\frac{2\pi}{N}n k}\\
         &=\frac{1}{\sqrt N}
@@ -227,73 +231,74 @@ Let's assume $N$ is even and observe that
         +\frac{1}{\sqrt 2}
         e^{-i\frac{2\pi}{N}k}\symcal{F}\left\{x_{2n+1}\right\}_k.
     \end{split}
-\end{equation}
+\end{equation*}
 The last expression is only defined up to $k=N/2$, but for the other half we get
-\begin{equation}
+\begin{equation*}
     X_{k+\frac{N}{2}}=\frac{1}{\sqrt 2}
     \symcal{F}\left\{x_{2n}\right\}_k
     -\frac{1}{\sqrt 2}
     e^{-i\frac{2\pi}{N}k}\symcal{F}\left\{x_{2n+1}\right\}_k.
-\end{equation}
+\end{equation*}
 Here we have expressed the DFT of $N$ points as the DFT of the $N/2$ even points and $N/2$ odd points.
+If now count the calculation steps, we have two times the DFT of $N/2$ points, so in total $2\times N^2/2^2=N^2/2$ steps,
+reducing the original complexity.
 This is called the \emph{Fast Fourier Transform (FFT)}, to be precise the radix-2-decimation-in-time Cooley-Tukey algorithm.
 It was originally discovered by Gauss, but due to the lack of computers at his time, it was not a very known result.
 Cooley and Tukey rediscovered the algorithm 160 years later in the sixties and popularized it.
 
 We can similarly express the inverse DFT by noticing
-\begin{equation}
+\begin{equation*}
     \symcal{F}^{-1}\left\{x_n\right\}
     =\symcal{F}\left\{x_{N-n}\right\}
     =\symcal{F}\left\{x_{n}^*\right\}^*.
-\end{equation}
+\end{equation*}
 Thus, we only need the implementation of the DFT to also get the inverse DFT.
 
 The complete divide and conquer in this form only works for $N$, which are powers of two.
 But, it is possible to generalize this to any composite number of the form $N=N_1N_2$.
-In that case we will combine $N_1$ smaller DFT with a DFT of size $N_2$\footnote{Note that the combination rule for the even $N$ case can be understood as a DFT of two points.}.
+In that case we will combine $N_1$ smaller DFTs with a DFT of size $N_2$\footnote{Note that the combination rule for the even $N$ case can be understood as a DFT of two points.}.
 For a full description see \cite{CTAlg}.
-Note that this yields problems, if our input data has prime-number length, for this special case there
-exist an algorithm allowing the DFT of prime-number-sized points in $N\log N$ time, using group-theory
-of prime-numbered modulo groups. The algorithm is called \emph{Rader's algorithm}, see \href{https://en.wikipedia.org/wiki/Rader%27s_FFT_algorithm}{en.wikipedia.org/wiki/Rader\%27s\_FFT\_algorithm}.
+Note that this yields problems if our input data has prime-number length. For this special case there
+exists an algorithm allowing the DFT of prime-number-sized points in $N\log N$ time, using group-theory
+of prime-numbered modulo groups.
+The algorithm is called \emph{Rader's algorithm} and a short overview can be found here \cite{radersalg}
 
 \subsection{Code}
-The code which produced the results is written in \texttt{C++}.
+The code which produced the results is written in \texttt{C++} and can be found here\cite{githubfft}.
 No numerical algorithms outside the standard template library were used, which
 means I implemented a version of the FFT and DCT myself.
 The code makes full use of every prime factor of $2$ in the number of transformed points,
 but not the full powered Tukey-Cooley algorithm, since an efficient implementation of that
 requires complicated reordering of the input numbers.
 The used algorithm can handle arbitrary length input data, which makes it
-more general than most implementations found online, since they are usually only implemented
+more general than most implementations found online\footnote{One implementation I took some inspiration from is for example \cite{fftoreil}.}, since they are usually only implemented
 for powers of 2.
 Nonetheless, the implementation should be viewed more as a toy-implementation for testing
-and can't compete with industry-grade optimized algorithms.
+and can't compete with industry-grade optimized algorithms\cite{fftw}.
 The FFT, DCT and their respective inverses where implemented in a generic fashion,
-so that they can be used on any datastructure supporting the square-bracket indexing
+so that they can be used on any data structure supporting the square-bracket indexing
 operator. Thus, it can be used on raw pointers as well as on higher level structures
 like vectors.
 
 The images in the Fourier space were represented by complex matrices from the \texttt{Eigen}
 library.
-To handle images, as well as image-input and -output the Boost Generic Image Library \texttt{Boost::GIL} was used.
+To handle images, as well as image-input and -output the Boost Generic Image Library \texttt{Boost::GIL}\cite{boostgil} was used.
 
 \section{Applications}
 One of the most notable places the Fourier transform appears in physics is the
 Fraunhofer-diffraction equation. In the far-field approximation, the diffraction image
-of an incoming planar wave is proportional to the 2D-Fourier transform of the aperture:
+of an incoming planar wave is proportional to the 2D-Fourier transform of the aperture
 \begin{equation}
-    A(x, y, z) \propto \iint_{\symup{Aperture}}\hspace{-3em} e^{-i\frac{2\pi}{\lambda z}(x'x+y'y)} \dif x' \dif y'
+    A(x, y, z) \propto \iint_{\symup{Aperture}}\hspace{-3em} e^{-i\frac{2\pi}{\lambda z}(x'x+y'y)} \dif x' \dif y'.
+    \label{eqn:fraunhofer}
 \end{equation}
 Thus, if we use a DFT of an image resembling an aperture, we can numerically approximate the diffraction image.
 Every photograph taken is slightly distorted through diffraction effects through the aperture.
 In space-telescopes for example the reflection mirror needs to be attached to the rest of the satellite,
 and the light from stars is diffracted at the attached rods, which creates the typical 4 or 6-fold diffraction
 symmetry of star-pictures.
-This can be removed from images through image editing in Fourier-space.
 
 Another application is the lossy compression of images, sound and other media types.
-An image can be for example saved by performing a DCT, reducing the amount
-of different points by quantizing in the frequency space.
 This is what (among other tricks) the \texttt{.jpg} image format does.
 
 Images can also be enhanced with Fourier transform. Assume for example we take a photograph through an insect-net.
